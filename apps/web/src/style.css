@@ -172,6 +172,29 @@ body {
   text-align: left;
 }
 
+.intro-form {
+  text-align: left;
+  margin-bottom: 1.15rem;
+}
+
+.intro-field-group {
+  margin-bottom: 1rem;
+}
+
+.intro-field-group:last-child {
+  margin-bottom: 0;
+}
+
+.intro-field-label {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
 .intro-lead {
   margin: 0 0 1.5rem;
   color: var(--text-muted);

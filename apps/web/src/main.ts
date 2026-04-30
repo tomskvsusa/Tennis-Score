@@ -74,6 +74,33 @@ function syncPlayerNamesToForm(
   if (ib) ib.value = names.b;
 }
 
+function readIntroPlayerNames(host: HTMLElement): { a: string; b: string } {
+  const a = (host.querySelector("#intro-name-a") as HTMLInputElement)?.value;
+  const b = (host.querySelector("#intro-name-b") as HTMLInputElement)?.value;
+  return { a: (a ?? "").trim(), b: (b ?? "").trim() };
+}
+
+function readIntroInitialServer(
+  host: HTMLElement,
+): Pick<MatchConfig, "initialServer"> {
+  const v = (
+    host.querySelector(
+      'input[name="intro-serve"]:checked',
+    ) as HTMLInputElement | null
+  )?.value;
+  return { initialServer: v === "b" ? "b" : "a" };
+}
+
+function flushIntroFormToStateIfPresent(host: HTMLElement) {
+  const shell = host.querySelector(".shell-intro");
+  if (!shell) return;
+  playerNames = readIntroPlayerNames(shell as HTMLElement);
+  pendingConfig = {
+    ...pendingConfig,
+    ...readIntroInitialServer(shell as HTMLElement),
+  };
+}
+
 function readConfigFromForm(root: HTMLElement): MatchConfig {
   const bestRaw = (
     root.querySelector('input[name="bestOf"]:checked') as HTMLInputElement
@@ -146,6 +173,8 @@ function openOptionsDialog() {
 }
 
 function introHtml(): string {
+  const serveAChecked = pendingConfig.initialServer === "a" ? "checked" : "";
+  const serveBChecked = pendingConfig.initialServer === "b" ? "checked" : "";
   return `
     <main class="shell shell-intro">
       <header class="hdr hdr-intro">
@@ -156,9 +185,72 @@ function introHtml(): string {
           <button type="button" class="pill-link" id="btn-rules-intro">Rules</button>
         </nav>
       </header>
+
+      <section class="intro-form" aria-label="Players and first serve">
+        <div class="intro-field-group">
+          <div class="intro-field-label" id="label-intro-names">Player names</div>
+          <div class="name-row" aria-labelledby="label-intro-names">
+            <label class="name-field">
+              <span class="name-field-hint">Side A</span>
+              <input
+                type="text"
+                id="intro-name-a"
+                class="input-premium"
+                maxlength="32"
+                placeholder="Player A"
+                autocomplete="off"
+                value="${escapeHtml(playerNames.a)}"
+              />
+            </label>
+            <label class="name-field">
+              <span class="name-field-hint">Side B</span>
+              <input
+                type="text"
+                id="intro-name-b"
+                class="input-premium"
+                maxlength="32"
+                placeholder="Player B"
+                autocomplete="off"
+                value="${escapeHtml(playerNames.b)}"
+              />
+            </label>
+          </div>
+        </div>
+        <div class="intro-field-group">
+          <div class="intro-field-label" id="label-intro-serve">First serve</div>
+          <div
+            class="seg-row seg-row-2"
+            role="radiogroup"
+            aria-labelledby="label-intro-serve"
+          >
+            <label class="seg-item">
+              <input
+                class="seg-input"
+                type="radio"
+                name="intro-serve"
+                value="a"
+                ${serveAChecked}
+              />
+              <span class="seg-text">Side A</span>
+            </label>
+            <label class="seg-item">
+              <input
+                class="seg-input"
+                type="radio"
+                name="intro-serve"
+                value="b"
+                ${serveBChecked}
+              />
+              <span class="seg-text">Side B</span>
+            </label>
+          </div>
+        </div>
+      </section>
+
       <p class="lead intro-lead">
-        Tap <strong>Start match</strong> to play. Default is best of 3, first to
-        6 games per set. Use Options to customize.
+        Tap <strong>Start match</strong> to begin. Default format is best of 3,
+        first to 6 games per set (tiebreak at 6–6). Use <strong>Options</strong> to
+        change format or deciding set.
       </p>
       <div class="intro-actions">
         <button type="button" class="btn a intro-start" id="btn-start">Start match</button>
@@ -249,7 +341,10 @@ function wireRulesOpen(root: HTMLElement) {
 }
 
 function wireOptionsOpen(root: HTMLElement) {
-  const open = () => openOptionsDialog();
+  const open = () => {
+    flushIntroFormToStateIfPresent(root);
+    openOptionsDialog();
+  };
   root.querySelector("#btn-options-intro")?.addEventListener("click", open);
   root.querySelector("#btn-options-board")?.addEventListener("click", open);
 }
@@ -261,6 +356,11 @@ function render() {
   if (!matchStarted) {
     root.innerHTML = introHtml();
     root.querySelector("#btn-start")?.addEventListener("click", () => {
+      const shell = root.querySelector(".shell-intro") as HTMLElement;
+      if (shell) {
+        playerNames = readIntroPlayerNames(shell);
+        pendingConfig = { ...pendingConfig, ...readIntroInitialServer(shell) };
+      }
       engine.reset(pendingConfig);
       matchStarted = true;
       render();
