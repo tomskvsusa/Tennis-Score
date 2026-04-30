@@ -220,16 +220,16 @@ function boardHtml(snap: MatchSnapshot): string {
       <section class="actions">
         <button type="button" class="btn a" data-action="a" aria-label="Award point to ${escapeHtml(labelForSide("a"))}" ${
           snap.matchWinner ? "disabled" : ""
-        }><span class="btn-label">Point · ${escapeHtml(labelForSide("a"))}</span></button>
+        }><span class="btn-label">${escapeHtml(labelForSide("a"))}</span></button>
         <button type="button" class="btn b" data-action="b" aria-label="Award point to ${escapeHtml(labelForSide("b"))}" ${
           snap.matchWinner ? "disabled" : ""
-        }><span class="btn-label">Point · ${escapeHtml(labelForSide("b"))}</span></button>
+        }><span class="btn-label">${escapeHtml(labelForSide("b"))}</span></button>
         <button type="button" class="btn ghost" data-action="undo">Undo</button>
         <button type="button" class="btn ghost" data-action="reset">New match</button>
       </section>
 
       <div class="below-actions">
-        <button type="button" class="link-btn text-only" data-action="setup">← Change format</button>
+        <button type="button" class="link-btn text-only" data-action="setup">← Match options</button>
       </div>
 
       <footer class="foot">
@@ -286,8 +286,7 @@ function render() {
       } else if (action === "reset") {
         engine.reset(pendingConfig);
       } else if (action === "setup") {
-        matchStarted = false;
-        engine.reset(pendingConfig);
+        openOptionsDialog();
       }
       render();
     });

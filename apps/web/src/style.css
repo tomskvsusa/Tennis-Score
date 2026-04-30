@@ -418,8 +418,22 @@ body {
 }
 
 .dlg-body-scroll {
-  max-height: min(85vh, 640px);
+  max-height: min(92dvh, 720px);
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.dlg-body-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.dlg-surface .opt-block {
+  margin-bottom: 0.95rem;
+}
+
+.dlg-surface .dlg-subtitle {
+  margin-bottom: 1rem;
 }
 
 .dlg-title {
