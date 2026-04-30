@@ -32,6 +32,100 @@ body {
   margin-bottom: 1.25rem;
 }
 
+.hdr-intro,
+.hdr-board {
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.hdr-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.toolbar-sep {
+  color: #475569;
+  font-size: 0.75rem;
+}
+
+.link-btn {
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.link-btn:hover {
+  color: #e2e8f0;
+}
+
+.link-btn.text-only {
+  display: inline;
+  width: auto;
+}
+
+.sets-inline {
+  margin: 0.35rem 0 0;
+}
+
+.shell-intro {
+  text-align: center;
+}
+
+.shell-intro .hdr-intro {
+  justify-content: space-between;
+  text-align: left;
+}
+
+.intro-lead {
+  margin: 0 0 1.5rem;
+  color: #94a3b8;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.intro-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.intro-start {
+  min-width: 12rem;
+}
+
+.cli-details {
+  margin: 0;
+}
+
+.cli-details summary {
+  cursor: pointer;
+  color: #64748b;
+  font-size: 0.78rem;
+  list-style: none;
+}
+
+.cli-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.cli-details .cli {
+  margin-top: 0.5rem;
+}
+
 .title {
   margin: 0;
   font-size: 1rem;
@@ -250,8 +344,25 @@ body {
   font-size: 1.15rem;
 }
 
-.rules-dlg form {
+.rules-dlg form,
+.rules-dlg .dlg-body {
   padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.dlg-lead {
+  margin-top: 0;
+}
+
+.dlg-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.dlg-save {
+  min-width: 6rem;
 }
 
 .rules-note {

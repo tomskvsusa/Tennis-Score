@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Счёт матча</title>
+    <title>Match score</title>
   </head>
   <body>
     <div
@@ -14,38 +14,108 @@
       hidden
     ></div>
     <div id="app"></div>
+
+    <dialog id="options" class="rules-dlg">
+      <div class="dlg-body">
+        <h2>Match options</h2>
+        <p class="rules-note dlg-lead">
+          Change format for the next match. Tap Save, then Start match or New
+          match.
+        </p>
+
+        <fieldset class="field">
+          <legend>Match</legend>
+          <label
+            ><input type="radio" name="bestOf" value="1" /> One set</label
+          >
+          <label
+            ><input type="radio" name="bestOf" value="3" checked /> Best of
+            3</label
+          >
+          <label><input type="radio" name="bestOf" value="5" /> Best of 5</label>
+        </fieldset>
+
+        <fieldset class="field">
+          <legend>Set length</legend>
+          <select name="games" class="select">
+            <option value="4">First to 4 games (tiebreak at 4–4)</option>
+            <option value="6" selected>First to 6 games (tiebreak at 6–6)</option>
+            <option value="8">First to 8 games (tiebreak at 8–8)</option>
+          </select>
+        </fieldset>
+
+        <fieldset class="field">
+          <legend>Deciding set</legend>
+          <label
+            ><input type="radio" name="deciding" value="full" checked /> Full
+            set</label
+          >
+          <label
+            ><input type="radio" name="deciding" value="matchTiebreak7" /> Match
+            tiebreak to 7</label
+          >
+          <label
+            ><input type="radio" name="deciding" value="matchTiebreak10" /> Match
+            tiebreak to 10</label
+          >
+          <p class="hint">
+            One-set match with a match tiebreak starts directly in the
+            tiebreak.
+          </p>
+        </fieldset>
+
+        <fieldset class="field">
+          <legend>First server</legend>
+          <label
+            ><input type="radio" name="serve" value="a" checked /> Player A</label
+          >
+          <label><input type="radio" name="serve" value="b" /> Player B</label>
+        </fieldset>
+
+        <div class="dlg-actions">
+          <button type="button" class="btn ghost" id="options-cancel">
+            Cancel
+          </button>
+          <button type="button" class="btn a dlg-save" id="options-save">
+            Save
+          </button>
+        </div>
+      </div>
+    </dialog>
+
     <dialog id="rules" class="rules-dlg">
       <form method="dialog">
-        <h2>Правила и тайминги (справка)</h2>
+        <h2>Rules &amp; timing (reference)</h2>
         <p class="rules-note">
-          Ниже ориентиры по правилам большого тенниса для любителей; в
-          приложении нет таймера — только подсказки, чтобы учиться.
+          Practical tennis timing guidelines for club play. This app does not
+          run a timer — only reminders so you can learn what to expect.
         </p>
         <ul class="rules-list">
           <li>
-            <strong>Между очками</strong> — обычно до 25 секунд (на турнирах
-            ATP/WTA часто 25 с с момента завершения предыдущего розыгрыша).
+            <strong>Between points</strong> — often up to about 25 seconds from
+            the end of the previous point on pro tours (ATP/WTA); recreational
+            play may be more relaxed.
           </li>
           <li>
-            <strong>Смена сторон</strong> — после каждого нечётного гейма в
-            сете (1:0, 2:1, …) и в начале тай-брейка; на перерыве между
-            сменами сторон часто до 90 секунд.
+            <strong>Change ends</strong> — after every odd game in a set (1–0,
+            2–1, …) and at the start of a tiebreak; changeover breaks are often
+            up to about 90 seconds.
           </li>
           <li>
-            <strong>Между сетами</strong> — перерыв до 120 секунд (2 минуты),
-            если не оговорено иначе организатором.
+            <strong>Between sets</strong> — commonly up to about 120 seconds (2
+            minutes) unless the organizer sets otherwise.
           </li>
           <li>
-            <strong>На переходах</strong> (смена сторон, между сетами) —
-            используйте паузу, чтобы подойти к другой стороне корта и
-            подготовиться к подаче.
+            <strong>On transitions</strong> — use the break to walk to the
+            other side and get ready to serve or receive.
           </li>
         </ul>
         <p class="rules-note">
-          Точные цифры зависят от регламента турнира (ITF / национальная
-          федерация). Уточняйте у судьи или организаторов.
+          Exact numbers depend on the competition rules (ITF, national body,
+          local tournament). Confirm with the referee or organizer when it
+          matters.
         </p>
-        <button type="submit" class="btn ghost rules-close">Закрыть</button>
+        <button type="submit" class="btn ghost rules-close">Close</button>
       </form>
     </dialog>
     <script type="module" src="/src/main.ts"></script>

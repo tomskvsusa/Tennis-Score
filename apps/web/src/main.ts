@@ -10,13 +10,16 @@ import {
 } from "@brainstorm/core";
 import "./style.css";
 
-let engine = new MatchEngine(defaultMatchConfig);
+let pendingConfig: MatchConfig = { ...defaultMatchConfig };
+let engine = new MatchEngine(pendingConfig);
 let matchStarted = false;
 
 const toastEl = document.querySelector("#toast") as HTMLElement;
 const rulesDlg = document.querySelector("#rules") as HTMLDialogElement;
+const optionsDlg = document.querySelector("#options") as HTMLDialogElement;
 
 let toastTimer: ReturnType<typeof setTimeout> | null = null;
+let optionsChromeWired = false;
 
 function showToast(text: string) {
   toastEl.textContent = text;
@@ -32,11 +35,11 @@ function toastChangeEnds(events: MatchEvent[]) {
   for (const ev of events) {
     if (ev.type !== "changeEnds") continue;
     if (ev.reason === "odd_games") {
-      showToast("Смена сторон: после нечётного гейма в сете.");
+      showToast("Change ends — after an odd game total in this set.");
     } else if (ev.reason === "set_break") {
-      showToast("Перерыв между сетами — смена сторон (ориентир до 90 с).");
+      showToast("Between sets — change ends (often up to ~90s).");
     } else if (ev.reason === "tiebreak_start") {
-      showToast("Смена сторон: начало тай-брейка.");
+      showToast("Change ends — tiebreak starting.");
     }
   }
 }
@@ -85,63 +88,47 @@ function syncFormFromConfig(root: HTMLElement, c: MatchConfig) {
   srv?.click();
 }
 
-function setupHtml(cfg: MatchConfig): string {
+function wireOptionsDialogOnce() {
+  if (optionsChromeWired) return;
+  optionsChromeWired = true;
+
+  document.querySelector("#options-save")?.addEventListener("click", () => {
+    pendingConfig = readConfigFromForm(optionsDlg);
+    optionsDlg.close();
+    if (!matchStarted) {
+      engine.reset(pendingConfig);
+    }
+    render();
+  });
+
+  document.querySelector("#options-cancel")?.addEventListener("click", () => {
+    syncFormFromConfig(optionsDlg, pendingConfig);
+    optionsDlg.close();
+  });
+}
+
+function openOptionsDialog() {
+  syncFormFromConfig(optionsDlg, pendingConfig);
+  optionsDlg.showModal();
+}
+
+function introHtml(): string {
   return `
-    <main class="shell setup">
-      <header class="hdr">
-        <h1 class="title">Настройка матча</h1>
+    <main class="shell shell-intro">
+      <header class="hdr hdr-intro">
+        <h1 class="title">Match</h1>
+        <nav class="toolbar" aria-label="Links">
+          <button type="button" class="link-btn" id="btn-options-intro">Options</button>
+          <span class="toolbar-sep" aria-hidden="true">·</span>
+          <button type="button" class="link-btn" id="btn-rules-intro">Rules</button>
+        </nav>
       </header>
-      <p class="lead">Выберите формат и нажмите «Начать матч».</p>
-
-      <fieldset class="field">
-        <legend>Матч</legend>
-        <label><input type="radio" name="bestOf" value="1" ${
-          cfg.bestOfSets === 1 ? "checked" : ""
-        } /> До 1 сета</label>
-        <label><input type="radio" name="bestOf" value="3" ${
-          cfg.bestOfSets === 3 ? "checked" : ""
-        } /> Best of 3</label>
-        <label><input type="radio" name="bestOf" value="5" ${
-          cfg.bestOfSets === 5 ? "checked" : ""
-        } /> Best of 5</label>
-      </fieldset>
-
-      <fieldset class="field">
-        <legend>Сет до</legend>
-        <select name="games" class="select">
-          <option value="4" ${cfg.gamesToWinSet === 4 ? "selected" : ""}>4 геймов (тай-брейк при 4:4)</option>
-          <option value="6" ${cfg.gamesToWinSet === 6 ? "selected" : ""}>6 геймов (тай-брейк при 6:6)</option>
-          <option value="8" ${cfg.gamesToWinSet === 8 ? "selected" : ""}>8 геймов (тай-брейк при 8:8)</option>
-        </select>
-      </fieldset>
-
-      <fieldset class="field">
-        <legend>Решающий сет</legend>
-        <label><input type="radio" name="deciding" value="full" ${
-          cfg.decidingSetFormat === "full" ? "checked" : ""
-        } /> Обычный сет</label>
-        <label><input type="radio" name="deciding" value="matchTiebreak7" ${
-          cfg.decidingSetFormat === "matchTiebreak7" ? "checked" : ""
-        } /> Матч-тайбрейк до 7</label>
-        <label><input type="radio" name="deciding" value="matchTiebreak10" ${
-          cfg.decidingSetFormat === "matchTiebreak10" ? "checked" : ""
-        } /> Матч-тайбрейк до 10</label>
-        <p class="hint">Для матча до 1 сета с матч-тайбрейком начнётся сразу тайбрейк.</p>
-      </fieldset>
-
-      <fieldset class="field">
-        <legend>Первый подающий</legend>
-        <label><input type="radio" name="serve" value="a" ${
-          cfg.initialServer === "a" ? "checked" : ""
-        } /> Игрок A</label>
-        <label><input type="radio" name="serve" value="b" ${
-          cfg.initialServer === "b" ? "checked" : ""
-        } /> Игрок B</label>
-      </fieldset>
-
-      <div class="setup-actions">
-        <button type="button" class="btn a" id="btn-start">Начать матч</button>
-        <button type="button" class="btn ghost" id="btn-rules-open">Правила и тайминги</button>
+      <p class="lead intro-lead">
+        Tap <strong>Start match</strong> to play. Default is best of 3, first to
+        6 games per set. Use Options to customize.
+      </p>
+      <div class="intro-actions">
+        <button type="button" class="btn a intro-start" id="btn-start">Start match</button>
       </div>
     </main>
   `;
@@ -152,20 +139,24 @@ function boardHtml(snap: MatchSnapshot): string {
   const subtitle = formatCurrentGameOrTiebreak(snap);
   const deciding =
     snap.isDecidingSet && !snap.matchWinner
-      ? `<p class="badge">Решающий сет</p>`
+      ? `<p class="badge">Deciding set</p>`
       : "";
 
   return `
     <main class="shell">
-      <header class="hdr">
-        <div>
-          <h1 class="title">Матч</h1>
-          <p class="meta">Bo${snap.config.bestOfSets} · сет до ${snap.config.gamesToWinSet} · ${snap.config.decidingSetFormat}</p>
+      <header class="hdr hdr-board">
+        <div class="hdr-main">
+          <h1 class="title">Match</h1>
+          <p class="sets sets-inline">${snap.setsWon.a} — ${snap.setsWon.b}</p>
         </div>
-        <p class="sets">${snap.setsWon.a} — ${snap.setsWon.b}</p>
+        <nav class="toolbar" aria-label="Links">
+          <button type="button" class="link-btn" id="btn-options-board">Options</button>
+          <span class="toolbar-sep" aria-hidden="true">·</span>
+          <button type="button" class="link-btn" id="btn-rules-board">Rules</button>
+        </nav>
       </header>
 
-      <p class="serve">Подача (следующий розыгрыш): <strong>${snap.server.toUpperCase()}</strong></p>
+      <p class="serve">Serve (next point): <strong>${snap.server.toUpperCase()}</strong></p>
       ${deciding}
 
       <section class="board" aria-live="polite">
@@ -184,7 +175,7 @@ function boardHtml(snap: MatchSnapshot): string {
         }
         ${
           snap.matchWinner
-            ? `<p class="winner">Матч: ${snap.matchWinner.toUpperCase()}</p>`
+            ? `<p class="winner">Winner: ${snap.matchWinner.toUpperCase()}</p>`
             : ""
         }
       </section>
@@ -192,21 +183,23 @@ function boardHtml(snap: MatchSnapshot): string {
       <section class="actions">
         <button type="button" class="btn a" data-action="a" ${
           snap.matchWinner ? "disabled" : ""
-        }>Очко A</button>
+        }>Point A</button>
         <button type="button" class="btn b" data-action="b" ${
           snap.matchWinner ? "disabled" : ""
-        }>Очко B</button>
-        <button type="button" class="btn ghost" data-action="undo">Отмена</button>
-        <button type="button" class="btn ghost" data-action="reset">Новый матч (тот же формат)</button>
+        }>Point B</button>
+        <button type="button" class="btn ghost" data-action="undo">Undo</button>
+        <button type="button" class="btn ghost" data-action="reset">New match</button>
       </section>
 
       <div class="below-actions">
-        <button type="button" class="btn ghost slim" data-action="setup">Настройки</button>
-        <button type="button" class="btn ghost slim" id="btn-rules-open-board">Правила и тайминги</button>
+        <button type="button" class="link-btn text-only" data-action="setup">← Change format</button>
       </div>
 
       <footer class="foot">
-        <pre class="cli">${lines.join("\n")}</pre>
+        <details class="cli-details">
+          <summary>Score details</summary>
+          <pre class="cli">${lines.join("\n")}</pre>
+        </details>
       </footer>
     </main>
   `;
@@ -214,25 +207,29 @@ function boardHtml(snap: MatchSnapshot): string {
 
 function wireRulesOpen(root: HTMLElement) {
   const open = () => rulesDlg.showModal();
-  root.querySelector("#btn-rules-open")?.addEventListener("click", open);
-  root
-    .querySelector("#btn-rules-open-board")
-    ?.addEventListener("click", open);
+  root.querySelector("#btn-rules-intro")?.addEventListener("click", open);
+  root.querySelector("#btn-rules-board")?.addEventListener("click", open);
+}
+
+function wireOptionsOpen(root: HTMLElement) {
+  const open = () => openOptionsDialog();
+  root.querySelector("#btn-options-intro")?.addEventListener("click", open);
+  root.querySelector("#btn-options-board")?.addEventListener("click", open);
 }
 
 function render() {
+  wireOptionsDialogOnce();
+
   const root = document.querySelector("#app") as HTMLElement;
   if (!matchStarted) {
-    const cfg = engine.getConfig() as MatchConfig;
-    root.innerHTML = setupHtml(cfg);
-    syncFormFromConfig(root, cfg);
+    root.innerHTML = introHtml();
     root.querySelector("#btn-start")?.addEventListener("click", () => {
-      const c = readConfigFromForm(root);
-      engine.reset(c);
+      engine.reset(pendingConfig);
       matchStarted = true;
       render();
     });
     wireRulesOpen(root);
+    wireOptionsOpen(root);
     return;
   }
 
@@ -244,20 +241,22 @@ function render() {
       const action = el.getAttribute("data-action");
       if (action === "a" || action === "b") {
         const r = engine.point(action);
-        if (!r.ok) alert(`Нельзя добавить очко: ${r.error.code}`);
+        if (!r.ok) alert(`Cannot add point: ${r.error.code}`);
         else toastChangeEnds(r.value.events);
       } else if (action === "undo") {
         const r = engine.undo();
-        if (!r.ok) alert(`Отмена: ${r.error.code}`);
+        if (!r.ok) alert(`Undo: ${r.error.code}`);
       } else if (action === "reset") {
-        engine.reset(engine.getConfig() as MatchConfig);
+        engine.reset(pendingConfig);
       } else if (action === "setup") {
         matchStarted = false;
+        engine.reset(pendingConfig);
       }
       render();
     });
   });
   wireRulesOpen(root);
+  wireOptionsOpen(root);
 }
 
 render();
