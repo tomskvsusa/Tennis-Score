@@ -64,7 +64,15 @@ function handleLine(line: string): boolean {
     }
     const r = engine.point(side);
     if (!r.ok) console.error(r.error.code);
-    else printStatus();
+    else {
+      if (r.value.events.length) {
+        console.log(
+          "Events:",
+          r.value.events.map((e) => `${e.type}:${e.reason}`).join(", "),
+        );
+      }
+      printStatus();
+    }
     return true;
   }
 
@@ -72,7 +80,15 @@ function handleLine(line: string): boolean {
   if (side) {
     const r = engine.point(side);
     if (!r.ok) console.error(r.error.code);
-    else printStatus();
+    else {
+      if (r.value.events.length) {
+        console.log(
+          "Events:",
+          r.value.events.map((e) => `${e.type}:${e.reason}`).join(", "),
+        );
+      }
+      printStatus();
+    }
     return true;
   }
 

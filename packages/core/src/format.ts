@@ -1,5 +1,6 @@
 import type { MatchSnapshot } from "./snapshot.js";
 import { isGameWon } from "./engine.js";
+import { setsToWinMatch } from "./matchConfig.js";
 
 const LABELS = [0, 15, 30, 40] as const;
 
@@ -9,6 +10,7 @@ export function formatCurrentGameOrTiebreak(s: MatchSnapshot): string {
 
   if (s.currentSet.inTiebreak && s.currentSet.tiebreakPoints) {
     const { a, b } = s.currentSet.tiebreakPoints;
+    if (s.currentSet.isMatchTiebreak) return `Match tiebreak ${a}–${b}`;
     return `Tiebreak ${a}–${b}`;
   }
 
@@ -24,15 +26,22 @@ export function formatCurrentGameOrTiebreak(s: MatchSnapshot): string {
   return `${LABELS[pa] ?? pa}–${LABELS[pb] ?? pb}`;
 }
 
+function formatCompletedSet(cs: MatchSnapshot["completedSets"][0]): string {
+  if (cs.matchTiebreak) return `MTB ${cs.gamesA}–${cs.gamesB}`;
+  return `${cs.gamesA}–${cs.gamesB}`;
+}
+
 /** Multi-line status for CLI. */
 export function formatStatus(s: MatchSnapshot): string {
   const lines: string[] = [];
+  const need = setsToWinMatch(s.config);
+  lines.push(
+    `Format: best of ${s.config.bestOfSets} (win ${need} sets), games/set ${s.config.gamesToWinSet}, deciding: ${s.config.decidingSetFormat}`,
+  );
   lines.push(`Sets: A ${s.setsWon.a} – B ${s.setsWon.b}`);
 
   if (s.completedSets.length > 0) {
-    const parts = s.completedSets.map(
-      (cs) => `${cs.gamesA}-${cs.gamesB}`,
-    );
+    const parts = s.completedSets.map(formatCompletedSet);
     lines.push(`Completed sets: ${parts.join(", ")}`);
   }
 
@@ -40,6 +49,7 @@ export function formatStatus(s: MatchSnapshot): string {
     `Current set games: ${s.currentSet.gamesA}–${s.currentSet.gamesB}`,
   );
   lines.push(`Points: ${formatCurrentGameOrTiebreak(s)}`);
+  lines.push(`Serve (next): ${s.server.toUpperCase()}`);
 
   if (s.matchWinner) {
     lines.push(`Winner: ${s.matchWinner.toUpperCase()}`);

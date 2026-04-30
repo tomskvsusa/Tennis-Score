@@ -1,3 +1,13 @@
+import {
+  defaultMatchConfig,
+  isDecidingNextSet,
+  matchTiebreakTargetPoints,
+  setTiebreakTargetPoints,
+  setsToWinMatch,
+  shouldStartDecidingMatchTiebreak,
+  type MatchConfig,
+} from "./matchConfig.js";
+
 export type Side = "a" | "b";
 
 export type MatchErrorCode = "MATCH_COMPLETE" | "UNDO_EMPTY";
@@ -8,8 +18,18 @@ export type MatchResult<T> =
   | { ok: true; value: T }
   | { ok: false; error: MatchError };
 
-const SETS_TO_WIN_MATCH = 2;
+export type ChangeEndsReason = "odd_games" | "set_break" | "tiebreak_start";
+
+export type MatchEvent = {
+  type: "changeEnds";
+  reason: ChangeEndsReason;
+};
+
 const MAX_UNDO = 500;
+
+export function otherSide(s: Side): Side {
+  return s === "a" ? "b" : "a";
+}
 
 /** Raw points within a regular game (standard tennis model: win at ≥4 with lead ≥2). */
 export function isGameWon(pointsA: number, pointsB: number): boolean {
@@ -21,106 +41,255 @@ function winnerOfGame(pointsA: number, pointsB: number): Side {
   return pointsA > pointsB ? "a" : "b";
 }
 
-export function isTiebreakWon(ta: number, tb: number): boolean {
+export function isTiebreakWon(
+  ta: number,
+  tb: number,
+  target: number = 7,
+): boolean {
   const x = Math.max(ta, tb);
-  return x >= 7 && Math.abs(ta - tb) >= 2;
+  return x >= target && Math.abs(ta - tb) >= 2;
 }
 
-/** Regular set (no tiebreak phase): first to 6 games, win by 2. */
-export function isRegularSetComplete(gamesA: number, gamesB: number): boolean {
+/** Regular set: first to `gamesToWin` games, win by 2 (no TB in this check). */
+export function isRegularSetComplete(
+  gamesA: number,
+  gamesB: number,
+  gamesToWin: number = 6,
+): boolean {
   return (
-    (gamesA >= 6 && gamesA - gamesB >= 2) ||
-    (gamesB >= 6 && gamesB - gamesA >= 2)
+    (gamesA >= gamesToWin && gamesA - gamesB >= 2) ||
+    (gamesB >= gamesToWin && gamesB - gamesA >= 2)
   );
 }
 
+/** Who serves point `n` (1-based) in a tiebreak; `first` serves point 1. */
+export function tiebreakServerForPointN(n: number, first: Side): Side {
+  if (n <= 1) return first;
+  const k = n - 2;
+  const block = Math.floor(k / 2);
+  return block % 2 === 0 ? otherSide(first) : first;
+}
+
+export type CompletedSet = {
+  gamesA: number;
+  gamesB: number;
+  /** True when this "set" was decided by a match tiebreak (Bo3/Bo5 deciding MTB). */
+  matchTiebreak?: boolean;
+};
+
 export type InternalState = {
+  config: MatchConfig;
   setsWonA: number;
   setsWonB: number;
-  completedSets: Array<{ gamesA: number; gamesB: number }>;
+  completedSets: CompletedSet[];
   gamesA: number;
   gamesB: number;
   inTiebreak: boolean;
+  /** Deciding set played as match tiebreak only (no games). */
+  isMatchTiebreak: boolean;
   gamePointsA: number;
   gamePointsB: number;
   tbA: number;
   tbB: number;
+  /** Player who serves the current regular game; updated when a game completes. */
+  server: Side;
+  /** Player who served point 1 of the current tiebreak; null when not in TB. */
+  tbFirstServer: Side | null;
   matchWinner: Side | null;
 };
 
-export function createInitialState(): InternalState {
+/** Side that serves the next point for the current score state. */
+export function serverForUpcomingPoint(s: InternalState): Side {
+  if (s.matchWinner) return s.server;
+  if (s.inTiebreak && s.tbFirstServer) {
+    const n = s.tbA + s.tbB + 1;
+    return tiebreakServerForPointN(n, s.tbFirstServer);
+  }
+  return s.server;
+}
+
+export function createInitialState(
+  config: MatchConfig = defaultMatchConfig,
+): InternalState {
+  const needMtb = shouldStartDecidingMatchTiebreak(
+    config,
+    0,
+    0,
+    null,
+  );
+  if (needMtb) {
+    const first = config.initialServer;
+    return {
+      config,
+      setsWonA: 0,
+      setsWonB: 0,
+      completedSets: [],
+      gamesA: 0,
+      gamesB: 0,
+      inTiebreak: true,
+      isMatchTiebreak: true,
+      gamePointsA: 0,
+      gamePointsB: 0,
+      tbA: 0,
+      tbB: 0,
+      server: first,
+      tbFirstServer: first,
+      matchWinner: null,
+    };
+  }
   return {
+    config,
     setsWonA: 0,
     setsWonB: 0,
     completedSets: [],
     gamesA: 0,
     gamesB: 0,
     inTiebreak: false,
+    isMatchTiebreak: false,
     gamePointsA: 0,
     gamePointsB: 0,
     tbA: 0,
     tbB: 0,
+    server: config.initialServer,
+    tbFirstServer: null,
     matchWinner: null,
   };
 }
 
 function cloneState(s: InternalState): InternalState {
   return {
+    config: s.config,
     setsWonA: s.setsWonA,
     setsWonB: s.setsWonB,
     completedSets: [...s.completedSets],
     gamesA: s.gamesA,
     gamesB: s.gamesB,
     inTiebreak: s.inTiebreak,
+    isMatchTiebreak: s.isMatchTiebreak,
     gamePointsA: s.gamePointsA,
     gamePointsB: s.gamePointsB,
     tbA: s.tbA,
     tbB: s.tbB,
+    server: s.server,
+    tbFirstServer: s.tbFirstServer,
     matchWinner: s.matchWinner,
   };
 }
 
-export function applyPoint(state: InternalState, side: Side): InternalState {
+function currentTiebreakTarget(s: InternalState): number {
+  if (s.isMatchTiebreak) {
+    const t = matchTiebreakTargetPoints(s.config.decidingSetFormat);
+    if (t != null) return t;
+  }
+  return setTiebreakTargetPoints();
+}
+
+function maybeSetMatchWinner(next: InternalState): void {
+  const need = setsToWinMatch(next.config);
+  if (next.setsWonA >= need) next.matchWinner = "a";
+  else if (next.setsWonB >= need) next.matchWinner = "b";
+}
+
+function beginNextSetOrMatchTiebreak(
+  next: InternalState,
+  events: MatchEvent[],
+): void {
+  next.gamesA = 0;
+  next.gamesB = 0;
+  next.gamePointsA = 0;
+  next.gamePointsB = 0;
+  next.inTiebreak = false;
+  next.isMatchTiebreak = false;
+  next.tbA = 0;
+  next.tbB = 0;
+  next.tbFirstServer = null;
+
+  if (next.matchWinner) return;
+
+  if (
+    shouldStartDecidingMatchTiebreak(
+      next.config,
+      next.setsWonA,
+      next.setsWonB,
+      next.matchWinner,
+    )
+  ) {
+    next.inTiebreak = true;
+    next.isMatchTiebreak = true;
+    next.tbFirstServer = next.server;
+    next.tbA = 0;
+    next.tbB = 0;
+    events.push({ type: "changeEnds", reason: "tiebreak_start" });
+  }
+}
+
+export type ApplyPointResult = {
+  state: InternalState;
+  events: MatchEvent[];
+};
+
+export function applyPoint(state: InternalState, side: Side): ApplyPointResult {
   if (state.matchWinner) {
     throw new Error("Invariant: applyPoint called with finished match");
   }
 
+  const events: MatchEvent[] = [];
   const next = cloneState(state);
 
   if (next.inTiebreak) {
+    const tbTarget = currentTiebreakTarget(next);
+    const first = next.tbFirstServer;
+    if (!first) {
+      throw new Error("Invariant: in tiebreak without tbFirstServer");
+    }
+
     if (side === "a") next.tbA += 1;
     else next.tbB += 1;
 
-    if (!isTiebreakWon(next.tbA, next.tbB)) {
-      return next;
+    if (!isTiebreakWon(next.tbA, next.tbB, tbTarget)) {
+      return { state: next, events };
     }
 
     const stb = next.tbA > next.tbB ? "a" : "b";
-    const finalA = stb === "a" ? 7 : 6;
-    const finalB = stb === "b" ? 7 : 6;
-    next.completedSets.push({ gamesA: finalA, gamesB: finalB });
+    const isMtb = next.isMatchTiebreak;
+    const gSet = next.config.gamesToWinSet;
+    if (isMtb) {
+      next.completedSets.push({
+        gamesA: next.tbA,
+        gamesB: next.tbB,
+        matchTiebreak: true,
+      });
+    } else {
+      next.completedSets.push({
+        gamesA: stb === "a" ? gSet + 1 : gSet,
+        gamesB: stb === "b" ? gSet + 1 : gSet,
+      });
+    }
     if (stb === "a") next.setsWonA += 1;
     else next.setsWonB += 1;
 
-    next.gamesA = 0;
-    next.gamesB = 0;
     next.inTiebreak = false;
+    next.isMatchTiebreak = false;
     next.tbA = 0;
     next.tbB = 0;
+    next.tbFirstServer = null;
     next.gamePointsA = 0;
     next.gamePointsB = 0;
+    next.gamesA = 0;
+    next.gamesB = 0;
 
-    if (next.setsWonA >= SETS_TO_WIN_MATCH) next.matchWinner = "a";
-    else if (next.setsWonB >= SETS_TO_WIN_MATCH) next.matchWinner = "b";
-
-    return next;
+    next.server = otherSide(first);
+    maybeSetMatchWinner(next);
+    events.push({ type: "changeEnds", reason: "set_break" });
+    if (!next.matchWinner) beginNextSetOrMatchTiebreak(next, events);
+    return { state: next, events };
   }
 
   if (side === "a") next.gamePointsA += 1;
   else next.gamePointsB += 1;
 
   if (!isGameWon(next.gamePointsA, next.gamePointsB)) {
-    return next;
+    return { state: next, events };
   }
 
   const gw = winnerOfGame(next.gamePointsA, next.gamePointsB);
@@ -129,14 +298,24 @@ export function applyPoint(state: InternalState, side: Side): InternalState {
   if (gw === "a") next.gamesA += 1;
   else next.gamesB += 1;
 
-  if (next.gamesA === 6 && next.gamesB === 6) {
-    next.inTiebreak = true;
-    next.tbA = 0;
-    next.tbB = 0;
-    return next;
+  next.server = otherSide(next.server);
+
+  const g = next.config.gamesToWinSet;
+  const totalGames = next.gamesA + next.gamesB;
+  if (totalGames % 2 === 1) {
+    events.push({ type: "changeEnds", reason: "odd_games" });
   }
 
-  if (isRegularSetComplete(next.gamesA, next.gamesB)) {
+  if (next.gamesA === g && next.gamesB === g) {
+    next.inTiebreak = true;
+    next.tbFirstServer = next.server;
+    next.tbA = 0;
+    next.tbB = 0;
+    events.push({ type: "changeEnds", reason: "tiebreak_start" });
+    return { state: next, events };
+  }
+
+  if (isRegularSetComplete(next.gamesA, next.gamesB, g)) {
     next.completedSets.push({ gamesA: next.gamesA, gamesB: next.gamesB });
     const sw: Side = next.gamesA > next.gamesB ? "a" : "b";
     if (sw === "a") next.setsWonA += 1;
@@ -145,22 +324,28 @@ export function applyPoint(state: InternalState, side: Side): InternalState {
     next.gamesA = 0;
     next.gamesB = 0;
 
-    if (next.setsWonA >= SETS_TO_WIN_MATCH) next.matchWinner = "a";
-    else if (next.setsWonB >= SETS_TO_WIN_MATCH) next.matchWinner = "b";
+    maybeSetMatchWinner(next);
+    events.push({ type: "changeEnds", reason: "set_break" });
+    if (!next.matchWinner) beginNextSetOrMatchTiebreak(next, events);
+    return { state: next, events };
   }
 
-  return next;
+  return { state: next, events };
 }
 
 export class MatchEngine {
   private state: InternalState;
   private stack: InternalState[] = [];
 
-  constructor() {
-    this.state = createInitialState();
+  constructor(config: MatchConfig = defaultMatchConfig) {
+    this.state = createInitialState(config);
   }
 
-  point(side: Side): MatchResult<void> {
+  getConfig(): Readonly<MatchConfig> {
+    return this.state.config;
+  }
+
+  point(side: Side): MatchResult<{ events: MatchEvent[] }> {
     if (this.state.matchWinner) {
       return { ok: false, error: { code: "MATCH_COMPLETE" } };
     }
@@ -168,8 +353,9 @@ export class MatchEngine {
       this.stack.shift();
     }
     this.stack.push(cloneState(this.state));
-    this.state = applyPoint(this.state, side);
-    return { ok: true, value: undefined };
+    const { state, events } = applyPoint(this.state, side);
+    this.state = state;
+    return { ok: true, value: { events } };
   }
 
   undo(): MatchResult<void> {
@@ -181,8 +367,8 @@ export class MatchEngine {
     return { ok: true, value: undefined };
   }
 
-  reset(): void {
-    this.state = createInitialState();
+  reset(config: MatchConfig = this.state.config): void {
+    this.state = createInitialState(config);
     this.stack = [];
   }
 

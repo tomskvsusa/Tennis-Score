@@ -1,12 +1,53 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Score counter</title>
+    <title>Счёт матча</title>
   </head>
   <body>
+    <div
+      id="toast"
+      class="toast"
+      role="status"
+      aria-live="polite"
+      hidden
+    ></div>
     <div id="app"></div>
+    <dialog id="rules" class="rules-dlg">
+      <form method="dialog">
+        <h2>Правила и тайминги (справка)</h2>
+        <p class="rules-note">
+          Ниже ориентиры по правилам большого тенниса для любителей; в
+          приложении нет таймера — только подсказки, чтобы учиться.
+        </p>
+        <ul class="rules-list">
+          <li>
+            <strong>Между очками</strong> — обычно до 25 секунд (на турнирах
+            ATP/WTA часто 25 с с момента завершения предыдущего розыгрыша).
+          </li>
+          <li>
+            <strong>Смена сторон</strong> — после каждого нечётного гейма в
+            сете (1:0, 2:1, …) и в начале тай-брейка; на перерыве между
+            сменами сторон часто до 90 секунд.
+          </li>
+          <li>
+            <strong>Между сетами</strong> — перерыв до 120 секунд (2 минуты),
+            если не оговорено иначе организатором.
+          </li>
+          <li>
+            <strong>На переходах</strong> (смена сторон, между сетами) —
+            используйте паузу, чтобы подойти к другой стороне корта и
+            подготовиться к подаче.
+          </li>
+        </ul>
+        <p class="rules-note">
+          Точные цифры зависят от регламента турнира (ITF / национальная
+          федерация). Уточняйте у судьи или организаторов.
+        </p>
+        <button type="submit" class="btn ghost rules-close">Закрыть</button>
+      </form>
+    </dialog>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
