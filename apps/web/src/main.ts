@@ -384,6 +384,7 @@ function render() {
         const r = engine.undo();
         if (!r.ok) alert(`Undo: ${r.error.code}`);
       } else if (action === "reset") {
+        matchStarted = false;
         engine.reset(pendingConfig);
       } else if (action === "setup") {
         openOptionsDialog();
