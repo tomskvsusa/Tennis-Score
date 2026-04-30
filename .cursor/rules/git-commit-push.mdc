@@ -1,0 +1,20 @@
+---
+description: Commit and push workflow for Tennis Score monorepo
+alwaysApply: true
+---
+
+# Git commit and push (this project)
+
+When you finish a task that changes tracked files and the user expects the work saved to GitHub:
+
+1. Run `git status` from the repo root `c:\Projects\Tennis Score` (or workspace root).
+2. Stage only relevant paths with `git add` (not blanket `git add .` unless the whole change set is intentional).
+3. Commit with a short **English** message, imperative mood, optional **Conventional Commits** prefix:
+   - `feat(scope): …` / `fix(scope): …` — scope examples: `web`, `core`, `cli`, `amplify`.
+4. Push with `git push` to the current branch (usually `main`).
+
+**Shell:** On Windows PowerShell, chain with `;` (e.g. `Set-Location "c:\Projects\Tennis Score"; git push`), not `&&`, unless you know the shell supports `&&`.
+
+**Do not** create or rewrite commits unless the user asked for git operations—except when they explicitly request commit/push or when this rule applies together with “save to remote” intent.
+
+If the user says **no commit**, **WIP**, or **don’t push**, skip push and leave the working tree as requested.
