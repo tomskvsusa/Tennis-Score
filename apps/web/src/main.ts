@@ -11,6 +11,7 @@ import {
 import "./style.css";
 
 let pendingConfig: MatchConfig = { ...defaultMatchConfig };
+let playerNames = { a: "", b: "" };
 let engine = new MatchEngine(pendingConfig);
 let matchStarted = false;
 
@@ -42,6 +43,35 @@ function toastChangeEnds(events: MatchEvent[]) {
       showToast("Change ends — tiebreak starting.");
     }
   }
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function labelForSide(side: "a" | "b"): string {
+  const raw = playerNames[side].trim();
+  return raw || (side === "a" ? "Player A" : "Player B");
+}
+
+function readPlayerNamesFromForm(root: HTMLElement): { a: string; b: string } {
+  const a = (root.querySelector("#player-name-a") as HTMLInputElement)?.value;
+  const b = (root.querySelector("#player-name-b") as HTMLInputElement)?.value;
+  return { a: (a ?? "").trim(), b: (b ?? "").trim() };
+}
+
+function syncPlayerNamesToForm(
+  root: HTMLElement,
+  names: { a: string; b: string },
+) {
+  const ia = root.querySelector("#player-name-a") as HTMLInputElement | null;
+  const ib = root.querySelector("#player-name-b") as HTMLInputElement | null;
+  if (ia) ia.value = names.a;
+  if (ib) ib.value = names.b;
 }
 
 function readConfigFromForm(root: HTMLElement): MatchConfig {
@@ -94,6 +124,7 @@ function wireOptionsDialogOnce() {
 
   document.querySelector("#options-save")?.addEventListener("click", () => {
     pendingConfig = readConfigFromForm(optionsDlg);
+    playerNames = readPlayerNamesFromForm(optionsDlg);
     optionsDlg.close();
     if (!matchStarted) {
       engine.reset(pendingConfig);
@@ -103,12 +134,14 @@ function wireOptionsDialogOnce() {
 
   document.querySelector("#options-cancel")?.addEventListener("click", () => {
     syncFormFromConfig(optionsDlg, pendingConfig);
+    syncPlayerNamesToForm(optionsDlg, playerNames);
     optionsDlg.close();
   });
 }
 
 function openOptionsDialog() {
   syncFormFromConfig(optionsDlg, pendingConfig);
+  syncPlayerNamesToForm(optionsDlg, playerNames);
   optionsDlg.showModal();
 }
 
@@ -156,7 +189,9 @@ function boardHtml(snap: MatchSnapshot): string {
         </nav>
       </header>
 
-      <p class="serve">Serve (next point): <strong>${snap.server.toUpperCase()}</strong></p>
+      <p class="names-subhdr">${escapeHtml(labelForSide("a"))} · ${escapeHtml(labelForSide("b"))}</p>
+
+      <p class="serve">Serve (next point): <strong>${escapeHtml(labelForSide(snap.server))}</strong></p>
       ${deciding}
 
       <section class="board" aria-live="polite">
@@ -175,7 +210,7 @@ function boardHtml(snap: MatchSnapshot): string {
         }
         ${
           snap.matchWinner
-            ? `<p class="winner">Winner: ${snap.matchWinner.toUpperCase()}</p>`
+            ? `<p class="winner">Winner: ${escapeHtml(labelForSide(snap.matchWinner))}</p>`
             : ""
         }
       </section>
@@ -183,12 +218,12 @@ function boardHtml(snap: MatchSnapshot): string {
       <hr class="board-divider" />
 
       <section class="actions">
-        <button type="button" class="btn a" data-action="a" ${
+        <button type="button" class="btn a" data-action="a" aria-label="Award point to ${escapeHtml(labelForSide("a"))}" ${
           snap.matchWinner ? "disabled" : ""
-        }>Point A</button>
-        <button type="button" class="btn b" data-action="b" ${
+        }><span class="btn-label">Point · ${escapeHtml(labelForSide("a"))}</span></button>
+        <button type="button" class="btn b" data-action="b" aria-label="Award point to ${escapeHtml(labelForSide("b"))}" ${
           snap.matchWinner ? "disabled" : ""
-        }>Point B</button>
+        }><span class="btn-label">Point · ${escapeHtml(labelForSide("b"))}</span></button>
         <button type="button" class="btn ghost" data-action="undo">Undo</button>
         <button type="button" class="btn ghost" data-action="reset">New match</button>
       </section>

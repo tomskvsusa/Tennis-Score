@@ -30,6 +30,34 @@
         </p>
 
         <div class="opt-block">
+          <div class="opt-label" id="label-names">Player names</div>
+          <div class="name-row" aria-labelledby="label-names">
+            <label class="name-field">
+              <span class="name-field-hint">Side A</span>
+              <input
+                type="text"
+                id="player-name-a"
+                class="input-premium"
+                maxlength="32"
+                placeholder="Player A"
+                autocomplete="off"
+              />
+            </label>
+            <label class="name-field">
+              <span class="name-field-hint">Side B</span>
+              <input
+                type="text"
+                id="player-name-b"
+                class="input-premium"
+                maxlength="32"
+                placeholder="Player B"
+                autocomplete="off"
+              />
+            </label>
+          </div>
+        </div>
+
+        <div class="opt-block">
           <div class="opt-label" id="label-bestOf">Match format</div>
           <div
             class="seg-row"
@@ -139,11 +167,11 @@
                 value="a"
                 checked
               />
-              <span class="seg-text">Player A</span>
+              <span class="seg-text">Side A</span>
             </label>
             <label class="seg-item">
               <input class="seg-input" type="radio" name="serve" value="b" />
-              <span class="seg-text">Player B</span>
+              <span class="seg-text">Side B</span>
             </label>
           </div>
         </div>
