@@ -118,9 +118,9 @@ function introHtml(): string {
       <header class="hdr hdr-intro">
         <h1 class="title">Match</h1>
         <nav class="toolbar" aria-label="Links">
-          <button type="button" class="link-btn" id="btn-options-intro">Options</button>
+          <button type="button" class="pill-link" id="btn-options-intro">Options</button>
           <span class="toolbar-sep" aria-hidden="true">·</span>
-          <button type="button" class="link-btn" id="btn-rules-intro">Rules</button>
+          <button type="button" class="pill-link" id="btn-rules-intro">Rules</button>
         </nav>
       </header>
       <p class="lead intro-lead">
@@ -150,9 +150,9 @@ function boardHtml(snap: MatchSnapshot): string {
           <p class="sets sets-inline">${snap.setsWon.a} — ${snap.setsWon.b}</p>
         </div>
         <nav class="toolbar" aria-label="Links">
-          <button type="button" class="link-btn" id="btn-options-board">Options</button>
+          <button type="button" class="pill-link" id="btn-options-board">Options</button>
           <span class="toolbar-sep" aria-hidden="true">·</span>
-          <button type="button" class="link-btn" id="btn-rules-board">Rules</button>
+          <button type="button" class="pill-link" id="btn-rules-board">Rules</button>
         </nav>
       </header>
 
@@ -179,6 +179,8 @@ function boardHtml(snap: MatchSnapshot): string {
             : ""
         }
       </section>
+
+      <hr class="board-divider" />
 
       <section class="actions">
         <button type="button" class="btn a" data-action="a" ${
