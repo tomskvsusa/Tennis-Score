@@ -24,6 +24,8 @@ export type MatchSnapshot = {
   };
   /** Who serves the next point (regular game or tiebreak rotation). */
   server: Side;
+  /** Times deuce was reached this game (for star point / 3rd-deuce UI). */
+  deuceArrivalsThisGame: number;
   isDecidingSet: boolean;
   matchWinner: Side | null;
 };
@@ -49,6 +51,7 @@ export function toSnapshot(s: InternalState): MatchSnapshot {
       gamePoints: { a: s.gamePointsA, b: s.gamePointsB },
     },
     server: serverForUpcomingPoint(s),
+    deuceArrivalsThisGame: s.inTiebreak ? 0 : s.deuceArrivalsThisGame,
     isDecidingSet,
     matchWinner: s.matchWinner,
   };

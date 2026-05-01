@@ -9,7 +9,6 @@ export {
   isGameWonWithRules,
   isRegularSetComplete,
   isTiebreakWon,
-  isTiebreakWonWithRules,
   otherSide,
   serverForUpcomingPoint,
   tiebreakServerForPointN,

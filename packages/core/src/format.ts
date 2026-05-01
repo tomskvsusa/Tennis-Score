@@ -1,6 +1,6 @@
 import type { MatchSnapshot } from "./snapshot.js";
 import { isGameWon } from "./engine.js";
-import { matchTiebreakTargetPoints, setsToWinMatch } from "./matchConfig.js";
+import { setsToWinMatch } from "./matchConfig.js";
 
 const LABELS = [0, 15, 30, 40] as const;
 
@@ -10,16 +10,8 @@ export function formatCurrentGameOrTiebreak(s: MatchSnapshot): string {
 
   if (s.currentSet.inTiebreak && s.currentSet.tiebreakPoints) {
     const { a, b } = s.currentSet.tiebreakPoints;
-    const tgt = s.currentSet.isMatchTiebreak
-      ? matchTiebreakTargetPoints(s.config.decidingSetFormat) ?? 7
-      : 7;
-    const starHint =
-      s.config.starPointInTiebreak && a === tgt - 1 && b === tgt - 1
-        ? " — next point wins"
-        : "";
-    if (s.currentSet.isMatchTiebreak)
-      return `Match tiebreak ${a}–${b}${starHint}`;
-    return `Tiebreak ${a}–${b}${starHint}`;
+    if (s.currentSet.isMatchTiebreak) return `Match tiebreak ${a}–${b}`;
+    return `Tiebreak ${a}–${b}`;
   }
 
   const pa = s.currentSet.gamePoints.a;
@@ -27,7 +19,15 @@ export function formatCurrentGameOrTiebreak(s: MatchSnapshot): string {
 
   if (pa >= 3 && pb >= 3) {
     if (pa === pb) {
-      return s.config.goldenPointAtDeuce ? "Deuce (golden point)" : "Deuce";
+      if (s.config.goldenPointAtDeuce) return "Deuce (golden point)";
+      if (
+        s.config.starPointInTiebreak &&
+        s.deuceArrivalsThisGame >= 3
+      )
+        return "Deuce (star point — next wins)";
+      if (s.config.starPointInTiebreak && s.deuceArrivalsThisGame === 2)
+        return "Deuce (2nd — star on next deuce)";
+      return "Deuce";
     }
     if (pa === pb + 1) return "Advantage A";
     if (pb === pa + 1) return "Advantage B";
@@ -46,7 +46,7 @@ export function formatStatus(s: MatchSnapshot): string {
   const lines: string[] = [];
   const need = setsToWinMatch(s.config);
   lines.push(
-    `Sport: ${s.config.sport}; format: best of ${s.config.bestOfSets} (win ${need} sets), games/set ${s.config.gamesToWinSet}, deciding: ${s.config.decidingSetFormat}; golden deuce: ${s.config.goldenPointAtDeuce}; star TB: ${s.config.starPointInTiebreak}`,
+    `Sport: ${s.config.sport}; format: best of ${s.config.bestOfSets} (win ${need} sets), games/set ${s.config.gamesToWinSet}, deciding: ${s.config.decidingSetFormat}; golden@1st deuce: ${s.config.goldenPointAtDeuce}; star@3rd deuce: ${s.config.starPointInTiebreak}`,
   );
   if (s.servePicker && s.config.sport === "padel") {
     lines.push(

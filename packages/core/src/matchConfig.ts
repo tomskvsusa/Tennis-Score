@@ -14,8 +14,8 @@ export type MatchConfig = {
   /** At 40–40 (3–3 points), the next point wins the game (no advantage). */
   goldenPointAtDeuce: boolean;
   /**
-   * In any tiebreak (set or match), at (target−1)–(target−1) the next point wins
-   * (e.g. 6–6→7–6 at TB to 7, or 9–9→10–9 at MTB to 10).
+   * After the 3rd time the score returns to deuce (40–40), the next point wins
+   * the game. Ignored when goldenPointAtDeuce is on (first deuce already decides).
    */
   starPointInTiebreak: boolean;
 };

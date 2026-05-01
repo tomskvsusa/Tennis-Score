@@ -44,34 +44,31 @@ export function isGameWon(pointsA: number, pointsB: number): boolean {
   return x >= 4 && Math.abs(pointsA - pointsB) >= 2;
 }
 
-/** Game over including optional golden point at 40–40 (3–3 → 4–3 or 3–4 ends the game). */
+/**
+ * Game over: standard win-by-two, optional first-deuce golden, or optional
+ * third-deuce golden (star point) when not using first-deuce golden.
+ */
 export function isGameWonWithRules(
   goldenPointAtDeuce: boolean,
+  starThirdDeuceGolden: boolean,
+  deuceArrivalsThisGame: number,
   pointsA: number,
   pointsB: number,
 ): boolean {
   if (isGameWon(pointsA, pointsB)) return true;
-  if (!goldenPointAtDeuce) return false;
   if (pointsA < 3 || pointsB < 3) return false;
   const hi = Math.max(pointsA, pointsB);
   const lo = Math.min(pointsA, pointsB);
-  return hi === 4 && lo === 3;
-}
-
-/** Tiebreak over: standard win-by-2 at target, or star point at (target−1)–all when enabled. */
-export function isTiebreakWonWithRules(
-  starPointInTiebreak: boolean,
-  ta: number,
-  tb: number,
-  target: number,
-): boolean {
-  if (isTiebreakWon(ta, tb, target)) return true;
-  if (!starPointInTiebreak) return false;
-  return (
-    ta + tb === 2 * target - 1 &&
-    Math.max(ta, tb) === target &&
-    Math.min(ta, tb) === target - 1
-  );
+  if (goldenPointAtDeuce && hi === 4 && lo === 3) return true;
+  if (
+    starThirdDeuceGolden &&
+    !goldenPointAtDeuce &&
+    deuceArrivalsThisGame >= 3 &&
+    hi === 4 &&
+    lo === 3
+  )
+    return true;
+  return false;
 }
 
 function winnerOfGame(pointsA: number, pointsB: number): Side {
@@ -134,6 +131,8 @@ export type InternalState = {
   tbFirstServer: Side | null;
   /** Padel only: waiting for UI to set next server / tiebreak first server. */
   servePicker: ServePickerReason | null;
+  /** Count of times the score has become deuce (40–40) this game; resets each game. */
+  deuceArrivalsThisGame: number;
   matchWinner: Side | null;
 };
 
@@ -176,6 +175,7 @@ export function createInitialState(
       server: first,
       tbFirstServer: first,
       servePicker: null,
+      deuceArrivalsThisGame: 0,
       matchWinner: null,
     };
   }
@@ -195,6 +195,7 @@ export function createInitialState(
     server: config.initialServer,
     tbFirstServer: null,
     servePicker: null,
+    deuceArrivalsThisGame: 0,
     matchWinner: null,
   };
 }
@@ -216,6 +217,7 @@ function cloneState(s: InternalState): InternalState {
     server: s.server,
     tbFirstServer: s.tbFirstServer,
     servePicker: s.servePicker,
+    deuceArrivalsThisGame: s.deuceArrivalsThisGame,
     matchWinner: s.matchWinner,
   };
 }
@@ -314,14 +316,7 @@ export function applyPoint(state: InternalState, side: Side): ApplyPointResult {
     if (side === "a") next.tbA += 1;
     else next.tbB += 1;
 
-    if (
-      !isTiebreakWonWithRules(
-        next.config.starPointInTiebreak,
-        next.tbA,
-        next.tbB,
-        tbTarget,
-      )
-    ) {
+    if (!isTiebreakWon(next.tbA, next.tbB, tbTarget)) {
       return { state: next, events };
     }
 
@@ -369,22 +364,45 @@ export function applyPoint(state: InternalState, side: Side): ApplyPointResult {
     return { state: next, events };
   }
 
+  const opa = next.gamePointsA;
+  const opb = next.gamePointsB;
   if (side === "a") next.gamePointsA += 1;
   else next.gamePointsB += 1;
+
+  let pa = next.gamePointsA;
+  let pb = next.gamePointsB;
+  if (pa === 4 && pb === 4) {
+    const fromAdOut =
+      (opa === 4 && opb === 3 && side === "b") ||
+      (opa === 3 && opb === 4 && side === "a");
+    if (fromAdOut) {
+      next.gamePointsA = 3;
+      next.gamePointsB = 3;
+      pa = 3;
+      pb = 3;
+    }
+  }
+
+  const was40 = opa === 3 && opb === 3;
+  const now40 = pa === 3 && pb === 3;
+  if (now40 && !was40) next.deuceArrivalsThisGame += 1;
 
   if (
     !isGameWonWithRules(
       next.config.goldenPointAtDeuce,
-      next.gamePointsA,
-      next.gamePointsB,
+      next.config.starPointInTiebreak,
+      next.deuceArrivalsThisGame,
+      pa,
+      pb,
     )
   ) {
     return { state: next, events };
   }
 
-  const gw = winnerOfGame(next.gamePointsA, next.gamePointsB);
+  const gw = winnerOfGame(pa, pb);
   next.gamePointsA = 0;
   next.gamePointsB = 0;
+  next.deuceArrivalsThisGame = 0;
   if (gw === "a") next.gamesA += 1;
   else next.gamesB += 1;
 

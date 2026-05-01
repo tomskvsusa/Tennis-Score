@@ -489,6 +489,10 @@ body {
   font-family: inherit;
 }
 
+.dlg-body-compact {
+  padding: 1rem 1.05rem 0.85rem;
+}
+
 .dlg-body-scroll {
   max-height: min(92dvh, 720px);
   overflow-y: auto;
@@ -504,8 +508,53 @@ body {
   margin-bottom: 0.95rem;
 }
 
+.dlg-body-compact .opt-block {
+  margin-bottom: 0.55rem;
+}
+
+.dlg-body-compact .dlg-title {
+  font-size: 1.22rem;
+}
+
+.dlg-body-compact .dlg-subtitle {
+  margin-bottom: 0.65rem;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.dlg-body-compact .opt-label {
+  margin-bottom: 0.3rem;
+}
+
+.dlg-body-compact .seg-item {
+  padding: 0.42rem 0.4rem;
+  font-size: 0.76rem;
+}
+
+.dlg-body-compact .hint-premium {
+  margin-top: 0.28rem;
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+.hint-tight {
+  margin-top: 0.25rem !important;
+}
+
 .dlg-surface .dlg-subtitle {
   margin-bottom: 1rem;
+}
+
+#options[data-sport="tennis"] .name-row-padel-only,
+.shell-intro.sport-tennis .name-row-padel-only {
+  display: none;
+}
+
+.names-vs {
+  margin: 0 0.35rem;
+  font-weight: 600;
+  color: var(--text-faint);
+  font-size: 0.85em;
 }
 
 .dlg-title {

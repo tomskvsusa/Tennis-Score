@@ -24,8 +24,8 @@
     ></div>
     <div id="app"></div>
 
-    <dialog id="options" class="dlg-surface">
-      <div class="dlg-body dlg-body-scroll">
+    <dialog id="options" class="dlg-surface" data-sport="tennis">
+      <div class="dlg-body dlg-body-scroll dlg-body-compact">
         <h2 class="dlg-title">Match options</h2>
         <p class="dlg-subtitle">
           Change format for the next match. Tap Save, then Start match or New
@@ -36,24 +36,48 @@
           <div class="opt-label" id="label-names">Player names</div>
           <div class="name-row" aria-labelledby="label-names">
             <label class="name-field">
-              <span class="name-field-hint">Side A</span>
+              <span class="name-field-hint">Team A — 1</span>
               <input
                 type="text"
-                id="player-name-a"
+                id="player-name-a1"
                 class="input-premium"
                 maxlength="32"
-                placeholder="Player A"
+                placeholder="Player A1"
                 autocomplete="off"
               />
             </label>
             <label class="name-field">
-              <span class="name-field-hint">Side B</span>
+              <span class="name-field-hint">Team B — 1</span>
               <input
                 type="text"
-                id="player-name-b"
+                id="player-name-b1"
                 class="input-premium"
                 maxlength="32"
-                placeholder="Player B"
+                placeholder="Player B1"
+                autocomplete="off"
+              />
+            </label>
+          </div>
+          <div class="name-row name-row-padel-only" aria-hidden="true">
+            <label class="name-field">
+              <span class="name-field-hint">Team A — 2</span>
+              <input
+                type="text"
+                id="player-name-a2"
+                class="input-premium"
+                maxlength="32"
+                placeholder="Player A2"
+                autocomplete="off"
+              />
+            </label>
+            <label class="name-field">
+              <span class="name-field-hint">Team B — 2</span>
+              <input
+                type="text"
+                id="player-name-b2"
+                class="input-premium"
+                maxlength="32"
+                placeholder="Player B2"
                 autocomplete="off"
               />
             </label>
@@ -82,9 +106,8 @@
               <span class="seg-text">Padel</span>
             </label>
           </div>
-          <p class="hint hint-premium">
-            Padel: after each serve change, you choose who serves next (doubles
-            rotation is not inferred).
+          <p class="hint hint-premium hint-tight">
+            Padel: pick server after each change; 4 names for doubles.
           </p>
         </div>
 
@@ -177,9 +200,8 @@
               <span class="seg-text">TB to 10</span>
             </label>
           </div>
-          <p class="hint hint-premium">
-            One-set match with a match tiebreak starts directly in the
-            tiebreak.
+          <p class="hint hint-premium hint-tight">
+            One-set + match TB starts in the tiebreak.
           </p>
         </div>
 
@@ -210,13 +232,13 @@
               <span class="seg-text">On</span>
             </label>
           </div>
-          <p class="hint hint-premium">
-            At 40–40, the next point wins the game (no advantage).
+          <p class="hint hint-premium hint-tight">
+            Next point wins at first 40–40 (no advantage).
           </p>
         </div>
 
         <div class="opt-block">
-          <div class="opt-label" id="label-star-tb">Star point (tiebreak)</div>
+          <div class="opt-label" id="label-star-tb">Star point (3rd deuce)</div>
           <div
             class="seg-row seg-row-2"
             role="radiogroup"
@@ -242,9 +264,9 @@
               <span class="seg-text">On</span>
             </label>
           </div>
-          <p class="hint hint-premium">
-            At 6–6 in a set tiebreak (or last point before target in a match
-            tiebreak), the next point wins that tiebreak.
+          <p class="hint hint-premium hint-tight">
+            After the 3rd return to 40–40, the next point wins the game. Off if
+            golden deuce is on.
           </p>
         </div>
 

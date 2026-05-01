@@ -7,7 +7,6 @@ import {
   isGameWonWithRules,
   isRegularSetComplete,
   isTiebreakWon,
-  isTiebreakWonWithRules,
 } from "./engine.js";
 import { toSnapshot } from "./snapshot.js";
 import { getSnapshot } from "./index.js";
@@ -43,24 +42,22 @@ describe("isGameWon", () => {
 });
 
 describe("isGameWonWithRules", () => {
-  it("golden point ends game at 4-3 from deuce", () => {
-    expect(isGameWonWithRules(true, 4, 3)).toBe(true);
-    expect(isGameWonWithRules(false, 4, 3)).toBe(false);
+  it("golden wins at 4-3 from first deuce", () => {
+    expect(isGameWonWithRules(true, false, 1, 4, 3)).toBe(true);
+    expect(isGameWonWithRules(false, false, 9, 4, 3)).toBe(false);
   });
 
-  it("classic win unchanged with golden on", () => {
-    expect(isGameWonWithRules(true, 6, 4)).toBe(true);
-  });
-});
-
-describe("isTiebreakWonWithRules", () => {
-  it("star point wins tiebreak 7-6 from 6-all", () => {
-    expect(isTiebreakWonWithRules(true, 7, 6, 7)).toBe(true);
-    expect(isTiebreakWonWithRules(false, 7, 6, 7)).toBe(false);
+  it("star (3rd deuce) wins at 4-3 when arrivals>=3", () => {
+    expect(isGameWonWithRules(false, true, 3, 4, 3)).toBe(true);
+    expect(isGameWonWithRules(false, true, 2, 4, 3)).toBe(false);
   });
 
-  it("match tiebreak 10-9 when star on", () => {
-    expect(isTiebreakWonWithRules(true, 10, 9, 10)).toBe(true);
+  it("golden dominates when both flags on", () => {
+    expect(isGameWonWithRules(true, true, 1, 4, 3)).toBe(true);
+  });
+
+  it("classic win unchanged", () => {
+    expect(isGameWonWithRules(false, false, 0, 6, 4)).toBe(true);
   });
 });
 
@@ -91,6 +88,29 @@ describe("isRegularSetComplete", () => {
 });
 
 describe("MatchEngine", () => {
+  it("third-deuce star wins game from 3-3", () => {
+    const cfg = {
+      ...defaultMatchConfig,
+      goldenPointAtDeuce: false,
+      starPointInTiebreak: true,
+    };
+    const e = new MatchEngine(cfg);
+    for (let i = 0; i < 3; i += 1) e.point("a");
+    for (let i = 0; i < 3; i += 1) e.point("b");
+    expect(getSnapshot(e).currentSet.gamePoints).toEqual({ a: 3, b: 3 });
+    e.point("a");
+    e.point("b");
+    expect(getSnapshot(e).currentSet.gamePoints).toEqual({ a: 3, b: 3 });
+    e.point("a");
+    e.point("b");
+    expect(getSnapshot(e).deuceArrivalsThisGame).toBe(3);
+    expect(getSnapshot(e).currentSet.gamePoints).toEqual({ a: 3, b: 3 });
+    e.point("a");
+    const s = getSnapshot(e);
+    expect(s.currentSet.gamesA).toBe(1);
+    expect(s.currentSet.gamePoints).toEqual({ a: 0, b: 0 });
+  });
+
   it("golden point at deuce wins game on next point", () => {
     const cfg = { ...defaultMatchConfig, goldenPointAtDeuce: true };
     const e = new MatchEngine(cfg);
@@ -118,7 +138,7 @@ describe("MatchEngine", () => {
     expect(s2.currentSet.gamePoints).toEqual({ a: 4, b: 3 });
     e.point("b");
     const s3 = getSnapshot(e);
-    expect(s3.currentSet.gamePoints).toEqual({ a: 4, b: 4 });
+    expect(s3.currentSet.gamePoints).toEqual({ a: 3, b: 3 });
     e.point("a");
     e.point("a");
     const s4 = getSnapshot(e);

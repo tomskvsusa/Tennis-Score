@@ -11,7 +11,9 @@ import {
 import "./style.css";
 
 let pendingConfig: MatchConfig = { ...defaultMatchConfig };
-let playerNames = { a: "", b: "" };
+
+type PlayerNamesState = { a1: string; a2: string; b1: string; b2: string };
+let playerNames: PlayerNamesState = { a1: "", a2: "", b1: "", b2: "" };
 let engine = new MatchEngine(pendingConfig);
 let matchStarted = false;
 
@@ -54,30 +56,49 @@ function escapeHtml(s: string): string {
 }
 
 function labelForSide(side: "a" | "b"): string {
-  const raw = playerNames[side].trim();
+  if (pendingConfig.sport === "padel") {
+    const parts =
+      side === "a"
+        ? [playerNames.a1, playerNames.a2]
+        : [playerNames.b1, playerNames.b2];
+    const joined = parts.map((x) => x.trim()).filter(Boolean).join(" · ");
+    return joined || (side === "a" ? "Team A" : "Team B");
+  }
+  const raw = (side === "a" ? playerNames.a1 : playerNames.b1).trim();
   return raw || (side === "a" ? "Player A" : "Player B");
 }
 
-function readPlayerNamesFromForm(root: HTMLElement): { a: string; b: string } {
-  const a = (root.querySelector("#player-name-a") as HTMLInputElement)?.value;
-  const b = (root.querySelector("#player-name-b") as HTMLInputElement)?.value;
-  return { a: (a ?? "").trim(), b: (b ?? "").trim() };
+function readPlayerNamesFromForm(root: HTMLElement): PlayerNamesState {
+  const v = (id: string) =>
+    (root.querySelector(id) as HTMLInputElement | null)?.value ?? "";
+  return {
+    a1: v("#player-name-a1").trim(),
+    a2: v("#player-name-a2").trim(),
+    b1: v("#player-name-b1").trim(),
+    b2: v("#player-name-b2").trim(),
+  };
 }
 
-function syncPlayerNamesToForm(
-  root: HTMLElement,
-  names: { a: string; b: string },
-) {
-  const ia = root.querySelector("#player-name-a") as HTMLInputElement | null;
-  const ib = root.querySelector("#player-name-b") as HTMLInputElement | null;
-  if (ia) ia.value = names.a;
-  if (ib) ib.value = names.b;
+function syncPlayerNamesToForm(root: HTMLElement, names: PlayerNamesState) {
+  const set = (id: string, val: string) => {
+    const el = root.querySelector(id) as HTMLInputElement | null;
+    if (el) el.value = val;
+  };
+  set("#player-name-a1", names.a1);
+  set("#player-name-a2", names.a2);
+  set("#player-name-b1", names.b1);
+  set("#player-name-b2", names.b2);
 }
 
-function readIntroPlayerNames(host: HTMLElement): { a: string; b: string } {
-  const a = (host.querySelector("#intro-name-a") as HTMLInputElement)?.value;
-  const b = (host.querySelector("#intro-name-b") as HTMLInputElement)?.value;
-  return { a: (a ?? "").trim(), b: (b ?? "").trim() };
+function readIntroPlayerNames(host: HTMLElement): PlayerNamesState {
+  const v = (id: string) =>
+    (host.querySelector(id) as HTMLInputElement | null)?.value ?? "";
+  return {
+    a1: v("#intro-name-a1").trim(),
+    a2: v("#intro-name-a2").trim(),
+    b1: v("#intro-name-b1").trim(),
+    b2: v("#intro-name-b2").trim(),
+  };
 }
 
 function readIntroInitialServer(
@@ -192,6 +213,13 @@ function wireOptionsDialogOnce() {
   if (optionsChromeWired) return;
   optionsChromeWired = true;
 
+  optionsDlg.addEventListener("change", (ev) => {
+    const t = ev.target;
+    if (t instanceof HTMLInputElement && t.name === "sport") {
+      optionsDlg.dataset.sport = t.value === "padel" ? "padel" : "tennis";
+    }
+  });
+
   document.querySelector("#options-save")?.addEventListener("click", () => {
     pendingConfig = readConfigFromForm(optionsDlg);
     playerNames = readPlayerNamesFromForm(optionsDlg);
@@ -210,6 +238,7 @@ function wireOptionsDialogOnce() {
 }
 
 function openOptionsDialog() {
+  optionsDlg.dataset.sport = pendingConfig.sport;
   syncFormFromConfig(optionsDlg, pendingConfig);
   syncPlayerNamesToForm(optionsDlg, playerNames);
   optionsDlg.showModal();
@@ -221,8 +250,10 @@ function introHtml(): string {
   const sportTennisChecked =
     pendingConfig.sport !== "padel" ? "checked" : "";
   const sportPadelChecked = pendingConfig.sport === "padel" ? "checked" : "";
+  const sportClass =
+    pendingConfig.sport === "padel" ? "sport-padel" : "sport-tennis";
   return `
-    <main class="shell shell-intro">
+    <main class="shell shell-intro ${sportClass}">
       <header class="hdr hdr-intro">
         <h1 class="title">Match</h1>
         <nav class="toolbar" aria-label="Links">
@@ -266,27 +297,53 @@ function introHtml(): string {
           <div class="intro-field-label" id="label-intro-names">Player names</div>
           <div class="name-row" aria-labelledby="label-intro-names">
             <label class="name-field">
-              <span class="name-field-hint">Side A</span>
+              <span class="name-field-hint">Team A — 1</span>
               <input
                 type="text"
-                id="intro-name-a"
+                id="intro-name-a1"
                 class="input-premium"
                 maxlength="32"
-                placeholder="Player A"
+                placeholder="Player A1"
                 autocomplete="off"
-                value="${escapeHtml(playerNames.a)}"
+                value="${escapeHtml(playerNames.a1)}"
               />
             </label>
             <label class="name-field">
-              <span class="name-field-hint">Side B</span>
+              <span class="name-field-hint">Team B — 1</span>
               <input
                 type="text"
-                id="intro-name-b"
+                id="intro-name-b1"
                 class="input-premium"
                 maxlength="32"
-                placeholder="Player B"
+                placeholder="Player B1"
                 autocomplete="off"
-                value="${escapeHtml(playerNames.b)}"
+                value="${escapeHtml(playerNames.b1)}"
+              />
+            </label>
+          </div>
+          <div class="name-row name-row-padel-only">
+            <label class="name-field">
+              <span class="name-field-hint">Team A — 2</span>
+              <input
+                type="text"
+                id="intro-name-a2"
+                class="input-premium"
+                maxlength="32"
+                placeholder="Player A2"
+                autocomplete="off"
+                value="${escapeHtml(playerNames.a2)}"
+              />
+            </label>
+            <label class="name-field">
+              <span class="name-field-hint">Team B — 2</span>
+              <input
+                type="text"
+                id="intro-name-b2"
+                class="input-premium"
+                maxlength="32"
+                placeholder="Player B2"
+                autocomplete="off"
+                value="${escapeHtml(playerNames.b2)}"
               />
             </label>
           </div>
@@ -380,7 +437,11 @@ function boardHtml(snap: MatchSnapshot): string {
         </nav>
       </header>
 
-      <p class="names-subhdr">${escapeHtml(labelForSide("a"))} · ${escapeHtml(labelForSide("b"))}</p>
+      <p class="names-subhdr">${
+        snap.config.sport === "padel"
+          ? `${escapeHtml(labelForSide("a"))}<span class="names-vs"> vs </span>${escapeHtml(labelForSide("b"))}`
+          : `${escapeHtml(labelForSide("a"))} · ${escapeHtml(labelForSide("b"))}`
+      }</p>
 
       ${serveLine}
       ${servePickBlock}
