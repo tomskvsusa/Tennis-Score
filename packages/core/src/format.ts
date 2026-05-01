@@ -1,6 +1,6 @@
 import type { MatchSnapshot } from "./snapshot.js";
 import { isGameWon } from "./engine.js";
-import { setsToWinMatch } from "./matchConfig.js";
+import { matchTiebreakTargetPoints, setsToWinMatch } from "./matchConfig.js";
 
 const LABELS = [0, 15, 30, 40] as const;
 
@@ -10,15 +10,25 @@ export function formatCurrentGameOrTiebreak(s: MatchSnapshot): string {
 
   if (s.currentSet.inTiebreak && s.currentSet.tiebreakPoints) {
     const { a, b } = s.currentSet.tiebreakPoints;
-    if (s.currentSet.isMatchTiebreak) return `Match tiebreak ${a}–${b}`;
-    return `Tiebreak ${a}–${b}`;
+    const tgt = s.currentSet.isMatchTiebreak
+      ? matchTiebreakTargetPoints(s.config.decidingSetFormat) ?? 7
+      : 7;
+    const starHint =
+      s.config.starPointInTiebreak && a === tgt - 1 && b === tgt - 1
+        ? " — next point wins"
+        : "";
+    if (s.currentSet.isMatchTiebreak)
+      return `Match tiebreak ${a}–${b}${starHint}`;
+    return `Tiebreak ${a}–${b}${starHint}`;
   }
 
   const pa = s.currentSet.gamePoints.a;
   const pb = s.currentSet.gamePoints.b;
 
   if (pa >= 3 && pb >= 3) {
-    if (pa === pb) return "Deuce";
+    if (pa === pb) {
+      return s.config.goldenPointAtDeuce ? "Deuce (golden point)" : "Deuce";
+    }
     if (pa === pb + 1) return "Advantage A";
     if (pb === pa + 1) return "Advantage B";
   }
@@ -36,7 +46,7 @@ export function formatStatus(s: MatchSnapshot): string {
   const lines: string[] = [];
   const need = setsToWinMatch(s.config);
   lines.push(
-    `Sport: ${s.config.sport}; format: best of ${s.config.bestOfSets} (win ${need} sets), games/set ${s.config.gamesToWinSet}, deciding: ${s.config.decidingSetFormat}`,
+    `Sport: ${s.config.sport}; format: best of ${s.config.bestOfSets} (win ${need} sets), games/set ${s.config.gamesToWinSet}, deciding: ${s.config.decidingSetFormat}; golden deuce: ${s.config.goldenPointAtDeuce}; star TB: ${s.config.starPointInTiebreak}`,
   );
   if (s.servePicker && s.config.sport === "padel") {
     lines.push(

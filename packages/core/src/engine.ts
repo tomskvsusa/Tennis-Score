@@ -44,6 +44,36 @@ export function isGameWon(pointsA: number, pointsB: number): boolean {
   return x >= 4 && Math.abs(pointsA - pointsB) >= 2;
 }
 
+/** Game over including optional golden point at 40–40 (3–3 → 4–3 or 3–4 ends the game). */
+export function isGameWonWithRules(
+  goldenPointAtDeuce: boolean,
+  pointsA: number,
+  pointsB: number,
+): boolean {
+  if (isGameWon(pointsA, pointsB)) return true;
+  if (!goldenPointAtDeuce) return false;
+  if (pointsA < 3 || pointsB < 3) return false;
+  const hi = Math.max(pointsA, pointsB);
+  const lo = Math.min(pointsA, pointsB);
+  return hi === 4 && lo === 3;
+}
+
+/** Tiebreak over: standard win-by-2 at target, or star point at (target−1)–all when enabled. */
+export function isTiebreakWonWithRules(
+  starPointInTiebreak: boolean,
+  ta: number,
+  tb: number,
+  target: number,
+): boolean {
+  if (isTiebreakWon(ta, tb, target)) return true;
+  if (!starPointInTiebreak) return false;
+  return (
+    ta + tb === 2 * target - 1 &&
+    Math.max(ta, tb) === target &&
+    Math.min(ta, tb) === target - 1
+  );
+}
+
 function winnerOfGame(pointsA: number, pointsB: number): Side {
   return pointsA > pointsB ? "a" : "b";
 }
@@ -284,7 +314,14 @@ export function applyPoint(state: InternalState, side: Side): ApplyPointResult {
     if (side === "a") next.tbA += 1;
     else next.tbB += 1;
 
-    if (!isTiebreakWon(next.tbA, next.tbB, tbTarget)) {
+    if (
+      !isTiebreakWonWithRules(
+        next.config.starPointInTiebreak,
+        next.tbA,
+        next.tbB,
+        tbTarget,
+      )
+    ) {
       return { state: next, events };
     }
 
@@ -335,7 +372,13 @@ export function applyPoint(state: InternalState, side: Side): ApplyPointResult {
   if (side === "a") next.gamePointsA += 1;
   else next.gamePointsB += 1;
 
-  if (!isGameWon(next.gamePointsA, next.gamePointsB)) {
+  if (
+    !isGameWonWithRules(
+      next.config.goldenPointAtDeuce,
+      next.gamePointsA,
+      next.gamePointsB,
+    )
+  ) {
     return { state: next, events };
   }
 

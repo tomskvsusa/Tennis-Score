@@ -131,6 +131,18 @@ function readConfigFromForm(root: HTMLElement): MatchConfig {
     root.querySelector('input[name="sport"]:checked') as HTMLInputElement
   )?.value;
   const sport = sportRaw === "padel" ? "padel" : "tennis";
+  const goldenOn =
+    (
+      root.querySelector(
+        'input[name="goldenPoint"]:checked',
+      ) as HTMLInputElement | null
+    )?.value === "on";
+  const starTbOn =
+    (
+      root.querySelector(
+        'input[name="starTiebreak"]:checked',
+      ) as HTMLInputElement | null
+    )?.value === "on";
   return {
     sport,
     bestOfSets: best === 1 || best === 3 || best === 5 ? best : 3,
@@ -140,6 +152,8 @@ function readConfigFromForm(root: HTMLElement): MatchConfig {
         ? deciding
         : "full",
     initialServer,
+    goldenPointAtDeuce: goldenOn,
+    starPointInTiebreak: starTbOn,
   };
 }
 
@@ -162,6 +176,16 @@ function syncFormFromConfig(root: HTMLElement, c: MatchConfig) {
     `input[name="sport"][value="${c.sport}"]`,
   );
   sp?.click();
+  root
+    .querySelector<HTMLInputElement>(
+      `input[name="goldenPoint"][value="${c.goldenPointAtDeuce ? "on" : "off"}"]`,
+    )
+    ?.click();
+  root
+    .querySelector<HTMLInputElement>(
+      `input[name="starTiebreak"][value="${c.starPointInTiebreak ? "on" : "off"}"]`,
+    )
+    ?.click();
 }
 
 function wireOptionsDialogOnce() {

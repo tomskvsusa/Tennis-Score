@@ -4,8 +4,10 @@ import {
   applyPoint,
   createInitialState,
   isGameWon,
+  isGameWonWithRules,
   isRegularSetComplete,
   isTiebreakWon,
+  isTiebreakWonWithRules,
 } from "./engine.js";
 import { toSnapshot } from "./snapshot.js";
 import { getSnapshot } from "./index.js";
@@ -40,6 +42,28 @@ describe("isGameWon", () => {
   });
 });
 
+describe("isGameWonWithRules", () => {
+  it("golden point ends game at 4-3 from deuce", () => {
+    expect(isGameWonWithRules(true, 4, 3)).toBe(true);
+    expect(isGameWonWithRules(false, 4, 3)).toBe(false);
+  });
+
+  it("classic win unchanged with golden on", () => {
+    expect(isGameWonWithRules(true, 6, 4)).toBe(true);
+  });
+});
+
+describe("isTiebreakWonWithRules", () => {
+  it("star point wins tiebreak 7-6 from 6-all", () => {
+    expect(isTiebreakWonWithRules(true, 7, 6, 7)).toBe(true);
+    expect(isTiebreakWonWithRules(false, 7, 6, 7)).toBe(false);
+  });
+
+  it("match tiebreak 10-9 when star on", () => {
+    expect(isTiebreakWonWithRules(true, 10, 9, 10)).toBe(true);
+  });
+});
+
 describe("isTiebreakWon", () => {
   it("is first to 7 with margin 2", () => {
     expect(isTiebreakWon(6, 6)).toBe(false);
@@ -67,6 +91,20 @@ describe("isRegularSetComplete", () => {
 });
 
 describe("MatchEngine", () => {
+  it("golden point at deuce wins game on next point", () => {
+    const cfg = { ...defaultMatchConfig, goldenPointAtDeuce: true };
+    const e = new MatchEngine(cfg);
+    for (let i = 0; i < 3; i += 1) {
+      e.point("a");
+      e.point("b");
+    }
+    expect(getSnapshot(e).currentSet.gamePoints).toEqual({ a: 3, b: 3 });
+    e.point("a");
+    const s = getSnapshot(e);
+    expect(s.currentSet.gamesA).toBe(1);
+    expect(s.currentSet.gamePoints).toEqual({ a: 0, b: 0 });
+  });
+
   it("deuce and advantage", () => {
     const e = new MatchEngine();
     for (let i = 0; i < 3; i += 1) {
@@ -157,6 +195,8 @@ describe("MatchEngine", () => {
       gamesToWinSet: 6,
       decidingSetFormat: "full",
       initialServer: "a",
+      goldenPointAtDeuce: false,
+      starPointInTiebreak: false,
     };
     const e = new MatchEngine(cfg);
     for (let i = 0; i < 4; i += 1) {
@@ -177,6 +217,8 @@ describe("MatchEngine", () => {
       gamesToWinSet: 6,
       decidingSetFormat: "full",
       initialServer: "a",
+      goldenPointAtDeuce: false,
+      starPointInTiebreak: false,
     };
     const e = new MatchEngine(cfg);
     const winSetForA = () => {
@@ -259,6 +301,8 @@ describe("MatchEngine", () => {
       gamesToWinSet: 6,
       decidingSetFormat: "matchTiebreak10",
       initialServer: "a",
+      goldenPointAtDeuce: false,
+      starPointInTiebreak: false,
     };
     const e = new MatchEngine(cfg);
     const winSet = (side: "a" | "b") => {
