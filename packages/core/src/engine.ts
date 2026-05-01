@@ -10,7 +10,14 @@ import {
 
 export type Side = "a" | "b";
 
-export type MatchErrorCode = "MATCH_COMPLETE" | "UNDO_EMPTY";
+export type MatchErrorCode =
+  | "MATCH_COMPLETE"
+  | "UNDO_EMPTY"
+  | "NEED_SERVE_PICK"
+  | "SERVE_PICK_NOT_PENDING";
+
+/** Padel: user must choose who serves after each serve change (between games) or who starts a tiebreak. */
+export type ServePickerReason = "nextGame" | "tiebreakStart";
 
 export type MatchError = { code: MatchErrorCode };
 
@@ -95,15 +102,19 @@ export type InternalState = {
   server: Side;
   /** Player who served point 1 of the current tiebreak; null when not in TB. */
   tbFirstServer: Side | null;
+  /** Padel only: waiting for UI to set next server / tiebreak first server. */
+  servePicker: ServePickerReason | null;
   matchWinner: Side | null;
 };
 
 /** Side that serves the next point for the current score state. */
 export function serverForUpcomingPoint(s: InternalState): Side {
   if (s.matchWinner) return s.server;
-  if (s.inTiebreak && s.tbFirstServer) {
+  if (s.inTiebreak) {
+    const first = s.tbFirstServer;
+    if (!first) return s.server;
     const n = s.tbA + s.tbB + 1;
-    return tiebreakServerForPointN(n, s.tbFirstServer);
+    return tiebreakServerForPointN(n, first);
   }
   return s.server;
 }
@@ -134,6 +145,7 @@ export function createInitialState(
       tbB: 0,
       server: first,
       tbFirstServer: first,
+      servePicker: null,
       matchWinner: null,
     };
   }
@@ -152,6 +164,7 @@ export function createInitialState(
     tbB: 0,
     server: config.initialServer,
     tbFirstServer: null,
+    servePicker: null,
     matchWinner: null,
   };
 }
@@ -172,6 +185,7 @@ function cloneState(s: InternalState): InternalState {
     tbB: s.tbB,
     server: s.server,
     tbFirstServer: s.tbFirstServer,
+    servePicker: s.servePicker,
     matchWinner: s.matchWinner,
   };
 }
@@ -216,9 +230,14 @@ function beginNextSetOrMatchTiebreak(
   ) {
     next.inTiebreak = true;
     next.isMatchTiebreak = true;
-    next.tbFirstServer = next.server;
     next.tbA = 0;
     next.tbB = 0;
+    if (next.config.sport === "padel") {
+      next.tbFirstServer = null;
+      next.servePicker = "tiebreakStart";
+    } else {
+      next.tbFirstServer = next.server;
+    }
     events.push({ type: "changeEnds", reason: "tiebreak_start" });
   }
 }
@@ -228,9 +247,28 @@ export type ApplyPointResult = {
   events: MatchEvent[];
 };
 
+function applyPickNextServer(state: InternalState, side: Side): InternalState {
+  const next = cloneState(state);
+  if (!next.servePicker || next.config.sport !== "padel") {
+    throw new Error("Invariant: pickNextServer without pending picker");
+  }
+  const reason = next.servePicker;
+  next.servePicker = null;
+  if (reason === "nextGame") {
+    next.server = side;
+    return next;
+  }
+  next.tbFirstServer = side;
+  next.server = side;
+  return next;
+}
+
 export function applyPoint(state: InternalState, side: Side): ApplyPointResult {
   if (state.matchWinner) {
     throw new Error("Invariant: applyPoint called with finished match");
+  }
+  if (state.servePicker && state.config.sport === "padel") {
+    throw new Error("Invariant: applyPoint while padel serve pick is pending");
   }
 
   const events: MatchEvent[] = [];
@@ -278,10 +316,19 @@ export function applyPoint(state: InternalState, side: Side): ApplyPointResult {
     next.gamesA = 0;
     next.gamesB = 0;
 
-    next.server = otherSide(first);
+    if (next.config.sport === "tennis") {
+      next.server = otherSide(first);
+    }
     maybeSetMatchWinner(next);
     events.push({ type: "changeEnds", reason: "set_break" });
     if (!next.matchWinner) beginNextSetOrMatchTiebreak(next, events);
+    if (
+      next.config.sport === "padel" &&
+      !next.matchWinner &&
+      !next.servePicker
+    ) {
+      next.servePicker = "nextGame";
+    }
     return { state: next, events };
   }
 
@@ -298,19 +345,29 @@ export function applyPoint(state: InternalState, side: Side): ApplyPointResult {
   if (gw === "a") next.gamesA += 1;
   else next.gamesB += 1;
 
-  next.server = otherSide(next.server);
-
   const g = next.config.gamesToWinSet;
+  const isSixSix = next.gamesA === g && next.gamesB === g;
+
+  if (next.config.sport === "tennis") {
+    next.server = otherSide(next.server);
+  } else {
+    next.servePicker = isSixSix ? "tiebreakStart" : "nextGame";
+  }
+
   const totalGames = next.gamesA + next.gamesB;
   if (totalGames % 2 === 1) {
     events.push({ type: "changeEnds", reason: "odd_games" });
   }
 
-  if (next.gamesA === g && next.gamesB === g) {
+  if (isSixSix) {
     next.inTiebreak = true;
-    next.tbFirstServer = next.server;
     next.tbA = 0;
     next.tbB = 0;
+    if (next.config.sport === "tennis") {
+      next.tbFirstServer = next.server;
+    } else {
+      next.tbFirstServer = null;
+    }
     events.push({ type: "changeEnds", reason: "tiebreak_start" });
     return { state: next, events };
   }
@@ -345,9 +402,27 @@ export class MatchEngine {
     return this.state.config;
   }
 
+  pickNextServer(side: Side): MatchResult<void> {
+    if (this.state.matchWinner) {
+      return { ok: false, error: { code: "MATCH_COMPLETE" } };
+    }
+    if (!this.state.servePicker || this.state.config.sport !== "padel") {
+      return { ok: false, error: { code: "SERVE_PICK_NOT_PENDING" } };
+    }
+    if (this.stack.length >= MAX_UNDO) {
+      this.stack.shift();
+    }
+    this.stack.push(cloneState(this.state));
+    this.state = applyPickNextServer(this.state, side);
+    return { ok: true, value: undefined };
+  }
+
   point(side: Side): MatchResult<{ events: MatchEvent[] }> {
     if (this.state.matchWinner) {
       return { ok: false, error: { code: "MATCH_COMPLETE" } };
+    }
+    if (this.state.servePicker && this.state.config.sport === "padel") {
+      return { ok: false, error: { code: "NEED_SERVE_PICK" } };
     }
     if (this.stack.length >= MAX_UNDO) {
       this.stack.shift();

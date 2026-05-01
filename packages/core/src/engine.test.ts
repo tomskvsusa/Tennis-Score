@@ -18,6 +18,19 @@ function winGame(engine: MatchEngine, side: "a" | "b") {
   }
 }
 
+function padelPoint(engine: MatchEngine, winner: "a" | "b", pickIfNeeded: "a" | "b") {
+  if (getSnapshot(engine).servePicker) {
+    expect(engine.pickNextServer(pickIfNeeded).ok).toBe(true);
+  }
+  expect(engine.point(winner).ok).toBe(true);
+}
+
+function winGamePadel(engine: MatchEngine, winner: "a" | "b", firstServeSide: "a" | "b") {
+  for (let i = 0; i < 4; i += 1) {
+    padelPoint(engine, winner, firstServeSide);
+  }
+}
+
 describe("isGameWon", () => {
   it("detects 4-0 and deuce path", () => {
     expect(isGameWon(4, 0)).toBe(true);
@@ -139,6 +152,7 @@ describe("MatchEngine", () => {
 
   it("best-of-1 ends after one set", () => {
     const cfg: MatchConfig = {
+      sport: "tennis",
       bestOfSets: 1,
       gamesToWinSet: 6,
       decidingSetFormat: "full",
@@ -158,6 +172,7 @@ describe("MatchEngine", () => {
 
   it("best-of-5 requires three sets", () => {
     const cfg: MatchConfig = {
+      sport: "tennis",
       bestOfSets: 5,
       gamesToWinSet: 6,
       decidingSetFormat: "full",
@@ -198,8 +213,48 @@ describe("MatchEngine", () => {
     expect(snap.currentSet.gamesB).toBe(4);
   });
 
+  it("padel requires serve pick after each game", () => {
+    const cfg: MatchConfig = {
+      ...defaultMatchConfig,
+      sport: "padel",
+      bestOfSets: 1,
+    };
+    const e = new MatchEngine(cfg);
+    winGame(e, "a");
+    expect(getSnapshot(e).servePicker).toBe("nextGame");
+    const blocked = e.point("a");
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) expect(blocked.error.code).toBe("NEED_SERVE_PICK");
+    expect(e.pickNextServer("b").ok).toBe(true);
+    expect(getSnapshot(e).servePicker).toBe(null);
+    expect(e.point("b").ok).toBe(true);
+  });
+
+  it("padel at 4-4 needs pick before tiebreak points", () => {
+    const cfg: MatchConfig = {
+      ...defaultMatchConfig,
+      sport: "padel",
+      gamesToWinSet: 4,
+    };
+    const e = new MatchEngine(cfg);
+    for (let i = 0; i < 3; i += 1) {
+      winGamePadel(e, "a", "a");
+      winGamePadel(e, "b", "b");
+    }
+    winGamePadel(e, "a", "a");
+    winGamePadel(e, "b", "b");
+    const mid = getSnapshot(e);
+    expect(mid.currentSet.inTiebreak).toBe(true);
+    expect(mid.servePicker).toBe("tiebreakStart");
+    expect(e.point("a").ok).toBe(false);
+    expect(e.pickNextServer("a").ok).toBe(true);
+    expect(getSnapshot(e).servePicker).toBe(null);
+    expect(e.point("a").ok).toBe(true);
+  });
+
   it("deciding match tiebreak 10 wins match from 1-1", () => {
     const cfg: MatchConfig = {
+      sport: "tennis",
       bestOfSets: 3,
       gamesToWinSet: 6,
       decidingSetFormat: "matchTiebreak10",

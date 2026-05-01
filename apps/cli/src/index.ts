@@ -30,6 +30,7 @@ function handleLine(line: string): boolean {
   if (cmd === "help" || cmd === "?") {
     console.log(`Commands:
   point a|b  — award point to side
+  pick a|b   — padel: confirm who serves next (when status asks for serve pick)
   undo       — undo last point
   status     — show score
   reset      — new match
@@ -51,6 +52,18 @@ function handleLine(line: string): boolean {
 
   if (cmd === "undo" || cmd === "u") {
     const r = engine.undo();
+    if (!r.ok) console.error(r.error.code);
+    else printStatus();
+    return true;
+  }
+
+  if (cmd === "pick") {
+    const side = parsePoint(parts[1] ?? "");
+    if (!side) {
+      console.error("Usage: pick a|b");
+      return true;
+    }
+    const r = engine.pickNextServer(side);
     if (!r.ok) console.error(r.error.code);
     else printStatus();
     return true;

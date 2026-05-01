@@ -1,9 +1,12 @@
 export type BestOfSets = 1 | 3 | 5;
 export type GamesToWinSet = 4 | 6 | 8;
 export type DecidingSetFormat = "full" | "matchTiebreak7" | "matchTiebreak10";
+export type MatchSport = "tennis" | "padel";
 
 /** Match format and scoring options (immutable for the duration of a match). */
 export type MatchConfig = {
+  /** Tennis: serve rotation follows standard rules. Padel: who serves next is chosen in the UI after each serve change. */
+  sport: MatchSport;
   bestOfSets: BestOfSets;
   gamesToWinSet: GamesToWinSet;
   decidingSetFormat: DecidingSetFormat;
@@ -12,6 +15,7 @@ export type MatchConfig = {
 
 /** Same defaults as the original hard-coded engine: Bo3, set to 6, TB at 6–6, first serve A. */
 export const defaultMatchConfig: MatchConfig = {
+  sport: "tennis",
   bestOfSets: 3,
   gamesToWinSet: 6,
   decidingSetFormat: "full",

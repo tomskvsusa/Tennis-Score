@@ -1,10 +1,13 @@
 import type { InternalState, Side } from "./engine.js";
 import { serverForUpcomingPoint } from "./engine.js";
+import type { ServePickerReason } from "./engine.js";
 import { isDecidingNextSet } from "./matchConfig.js";
 import type { MatchConfig } from "./matchConfig.js";
 
 export type MatchSnapshot = {
   config: MatchConfig;
+  /** Padel: waiting for who serves next game or who starts tiebreak. */
+  servePicker: ServePickerReason | null;
   setsWon: { a: number; b: number };
   completedSets: Array<{
     gamesA: number;
@@ -34,6 +37,7 @@ export function toSnapshot(s: InternalState): MatchSnapshot {
   );
   return {
     config: s.config,
+    servePicker: s.servePicker,
     setsWon: { a: s.setsWonA, b: s.setsWonB },
     completedSets: [...s.completedSets],
     currentSet: {

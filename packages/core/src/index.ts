@@ -19,6 +19,7 @@ export {
   type MatchErrorCode,
   type MatchEvent,
   type MatchResult,
+  type ServePickerReason,
   type Side,
 } from "./engine.js";
 export { toSnapshot, type MatchSnapshot } from "./snapshot.js";
@@ -33,6 +34,7 @@ export {
   type DecidingSetFormat,
   type GamesToWinSet,
   type MatchConfig,
+  type MatchSport,
 } from "./matchConfig.js";
 
 export function getSnapshot(engine: MatchEngine): MatchSnapshot {

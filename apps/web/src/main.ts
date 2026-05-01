@@ -98,7 +98,17 @@ function flushIntroFormToStateIfPresent(host: HTMLElement) {
   pendingConfig = {
     ...pendingConfig,
     ...readIntroInitialServer(shell as HTMLElement),
+    ...readIntroSport(shell as HTMLElement),
   };
+}
+
+function readIntroSport(host: HTMLElement): Pick<MatchConfig, "sport"> {
+  const v = (
+    host.querySelector(
+      'input[name="intro-sport"]:checked',
+    ) as HTMLInputElement | null
+  )?.value;
+  return { sport: v === "padel" ? "padel" : "tennis" };
 }
 
 function readConfigFromForm(root: HTMLElement): MatchConfig {
@@ -117,7 +127,12 @@ function readConfigFromForm(root: HTMLElement): MatchConfig {
       ?.value === "b"
       ? "b"
       : "a";
+  const sportRaw = (
+    root.querySelector('input[name="sport"]:checked') as HTMLInputElement
+  )?.value;
+  const sport = sportRaw === "padel" ? "padel" : "tennis";
   return {
+    sport,
     bestOfSets: best === 1 || best === 3 || best === 5 ? best : 3,
     gamesToWinSet: games === 4 || games === 6 || games === 8 ? games : 6,
     decidingSetFormat:
@@ -143,6 +158,10 @@ function syncFormFromConfig(root: HTMLElement, c: MatchConfig) {
     `input[name="serve"][value="${c.initialServer}"]`,
   );
   srv?.click();
+  const sp = root.querySelector<HTMLInputElement>(
+    `input[name="sport"][value="${c.sport}"]`,
+  );
+  sp?.click();
 }
 
 function wireOptionsDialogOnce() {
@@ -175,6 +194,9 @@ function openOptionsDialog() {
 function introHtml(): string {
   const serveAChecked = pendingConfig.initialServer === "a" ? "checked" : "";
   const serveBChecked = pendingConfig.initialServer === "b" ? "checked" : "";
+  const sportTennisChecked =
+    pendingConfig.sport !== "padel" ? "checked" : "";
+  const sportPadelChecked = pendingConfig.sport === "padel" ? "checked" : "";
   return `
     <main class="shell shell-intro">
       <header class="hdr hdr-intro">
@@ -187,6 +209,35 @@ function introHtml(): string {
       </header>
 
       <section class="intro-form" aria-label="Players and first serve">
+        <div class="intro-field-group">
+          <div class="intro-field-label" id="label-intro-sport">Sport</div>
+          <div
+            class="seg-row seg-row-2"
+            role="radiogroup"
+            aria-labelledby="label-intro-sport"
+          >
+            <label class="seg-item">
+              <input
+                class="seg-input"
+                type="radio"
+                name="intro-sport"
+                value="tennis"
+                ${sportTennisChecked}
+              />
+              <span class="seg-text">Tennis</span>
+            </label>
+            <label class="seg-item">
+              <input
+                class="seg-input"
+                type="radio"
+                name="intro-sport"
+                value="padel"
+                ${sportPadelChecked}
+              />
+              <span class="seg-text">Padel</span>
+            </label>
+          </div>
+        </div>
         <div class="intro-field-group">
           <div class="intro-field-label" id="label-intro-names">Player names</div>
           <div class="name-row" aria-labelledby="label-intro-names">
@@ -251,6 +302,10 @@ function introHtml(): string {
         Tap <strong>Start match</strong> to begin. Default format is best of 3,
         first to 6 games per set (tiebreak at 6–6). Use <strong>Options</strong> to
         change format or deciding set.
+        <span class="intro-padel-note">
+          Padel: after each game you choose who serves next; before a tiebreak you
+          choose who serves first in the tiebreak.
+        </span>
       </p>
       <div class="intro-actions">
         <button type="button" class="btn a intro-start" id="btn-start">Start match</button>
@@ -266,6 +321,26 @@ function boardHtml(snap: MatchSnapshot): string {
     snap.isDecidingSet && !snap.matchWinner
       ? `<p class="badge">Deciding set</p>`
       : "";
+  const padelNeedsServe =
+    snap.servePicker != null && snap.config.sport === "padel";
+  const pickTitle =
+    snap.servePicker === "tiebreakStart"
+      ? "Who starts this tiebreak?"
+      : "Who serves the next game?";
+  const serveLine = padelNeedsServe
+    ? `<p class="serve serve-pending">Choose the server below.</p>`
+    : `<p class="serve">Serve (next point): <strong>${escapeHtml(labelForSide(snap.server))}</strong></p>`;
+  const servePickBlock =
+    padelNeedsServe && !snap.matchWinner
+      ? `<section class="serve-pick" aria-live="polite">
+          <p class="serve-pick-title">${escapeHtml(pickTitle)}</p>
+          <div class="serve-pick-row">
+            <button type="button" class="btn a" data-action="pick-serve" data-side="a">${escapeHtml(labelForSide("a"))}</button>
+            <button type="button" class="btn b" data-action="pick-serve" data-side="b">${escapeHtml(labelForSide("b"))}</button>
+          </div>
+        </section>`
+      : "";
+  const pointDisabled = snap.matchWinner || padelNeedsServe;
 
   return `
     <main class="shell">
@@ -283,7 +358,8 @@ function boardHtml(snap: MatchSnapshot): string {
 
       <p class="names-subhdr">${escapeHtml(labelForSide("a"))} · ${escapeHtml(labelForSide("b"))}</p>
 
-      <p class="serve">Serve (next point): <strong>${escapeHtml(labelForSide(snap.server))}</strong></p>
+      ${serveLine}
+      ${servePickBlock}
       ${deciding}
 
       <section class="board" aria-live="polite">
@@ -311,10 +387,10 @@ function boardHtml(snap: MatchSnapshot): string {
 
       <section class="actions">
         <button type="button" class="btn a" data-action="a" aria-label="Award point to ${escapeHtml(labelForSide("a"))}" ${
-          snap.matchWinner ? "disabled" : ""
+          pointDisabled ? "disabled" : ""
         }><span class="btn-label">${escapeHtml(labelForSide("a"))}</span></button>
         <button type="button" class="btn b" data-action="b" aria-label="Award point to ${escapeHtml(labelForSide("b"))}" ${
-          snap.matchWinner ? "disabled" : ""
+          pointDisabled ? "disabled" : ""
         }><span class="btn-label">${escapeHtml(labelForSide("b"))}</span></button>
         <button type="button" class="btn ghost" data-action="undo">Undo</button>
         <button type="button" class="btn ghost" data-action="reset">New match</button>
@@ -359,7 +435,11 @@ function render() {
       const shell = root.querySelector(".shell-intro") as HTMLElement;
       if (shell) {
         playerNames = readIntroPlayerNames(shell);
-        pendingConfig = { ...pendingConfig, ...readIntroInitialServer(shell) };
+        pendingConfig = {
+          ...pendingConfig,
+          ...readIntroInitialServer(shell),
+          ...readIntroSport(shell),
+        };
       }
       engine.reset(pendingConfig);
       matchStarted = true;
@@ -376,7 +456,12 @@ function render() {
   root.querySelectorAll("[data-action]").forEach((el) => {
     el.addEventListener("click", () => {
       const action = el.getAttribute("data-action");
-      if (action === "a" || action === "b") {
+      if (action === "pick-serve") {
+        const side = el.getAttribute("data-side");
+        if (side !== "a" && side !== "b") return;
+        const r = engine.pickNextServer(side);
+        if (!r.ok) alert(`Serve pick: ${r.error.code}`);
+      } else if (action === "a" || action === "b") {
         const r = engine.point(action);
         if (!r.ok) alert(`Cannot add point: ${r.error.code}`);
         else toastChangeEnds(r.value.events);
