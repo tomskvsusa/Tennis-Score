@@ -1,3 +1,4 @@
+import { showFourPlayerNames } from "@brainstorm/core";
 import { escapeHtml } from "./escapeHtml.js";
 import { session } from "./session.js";
 
@@ -9,8 +10,11 @@ export function introHtml(): string {
   const sportTennisChecked = c.sport !== "padel" ? "checked" : "";
   const sportPadelChecked = c.sport === "padel" ? "checked" : "";
   const introSportData = c.sport === "padel" ? "padel" : "tennis";
+  const introFourNames = showFourPlayerNames(c) ? "true" : "false";
+  const tennisDoublesChecked =
+    c.sport === "tennis" && c.tennisDoubles ? "checked" : "";
   return `
-    <main class="shell shell-intro" data-intro-sport="${introSportData}">
+    <main class="shell shell-intro" data-intro-sport="${introSportData}" data-intro-four-names="${introFourNames}">
       <header class="hdr hdr-intro">
         <h1 class="title">Match</h1>
         <nav class="toolbar" aria-label="Links">
@@ -50,10 +54,23 @@ export function introHtml(): string {
             </label>
           </div>
         </div>
+        <div class="intro-field-group intro-tennis-doubles-only">
+          <label class="checkbox-row-premium" for="intro-tennis-doubles">
+            <input
+              type="checkbox"
+              id="intro-tennis-doubles"
+              ${tennisDoublesChecked}
+            />
+            <span>Doubles</span>
+          </label>
+          <p class="hint hint-premium hint-tight intro-doubles-subhint">
+            Four name fields — two per team.
+          </p>
+        </div>
         <div class="intro-field-group">
           <div class="intro-field-label" id="label-intro-names">Player names</div>
           <p class="intro-doubles-hint hint-premium hint-tight">
-            Padel doubles: four players — two names per team (rows below).
+            Enter two names per team when doubles is on (rows below).
           </p>
           <div class="name-row" aria-labelledby="label-intro-names">
             <label class="name-field">
@@ -81,7 +98,7 @@ export function introHtml(): string {
               />
             </label>
           </div>
-          <div class="name-row name-row-padel-only">
+          <div class="name-row name-row-second-pair" aria-hidden="${introFourNames === "true" ? "false" : "true"}">
             <label class="name-field">
               <span class="name-field-hint">Team A — 2</span>
               <input

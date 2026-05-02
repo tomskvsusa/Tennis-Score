@@ -53,6 +53,7 @@ describe("MatchEngine padel and deciding tiebreak", () => {
       initialServer: "a",
       goldenPointAtDeuce: false,
       starPointInTiebreak: false,
+      tennisDoubles: false,
     };
     const e = new MatchEngine(cfg);
     const winSet = (side: "a" | "b") => {

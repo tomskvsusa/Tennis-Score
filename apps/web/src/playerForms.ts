@@ -57,13 +57,32 @@ export function readIntroSport(host: HTMLElement): Pick<MatchConfig, "sport"> {
   return { sport: v === "padel" ? "padel" : "tennis" };
 }
 
+/** Tennis: from checkbox. Padel: keeps existing flag (ignored for display). */
+export function readIntroTennisDoubles(
+  host: HTMLElement,
+): Pick<MatchConfig, "tennisDoubles"> {
+  const sport = readIntroSport(host).sport;
+  if (sport === "padel") {
+    return { tennisDoubles: session.pendingConfig.tennisDoubles };
+  }
+  return {
+    tennisDoubles:
+      (
+        host.querySelector(
+          "#intro-tennis-doubles",
+        ) as HTMLInputElement | null
+      )?.checked ?? false,
+  };
+}
+
 export function flushIntroFormToStateIfPresent(host: HTMLElement): void {
   const shell = host.querySelector(".shell-intro");
-  if (!shell) return;
-  session.playerNames = readIntroPlayerNames(shell as HTMLElement);
+  if (!(shell instanceof HTMLElement)) return;
+  session.playerNames = readIntroPlayerNames(shell);
   session.pendingConfig = {
     ...session.pendingConfig,
-    ...readIntroInitialServer(shell as HTMLElement),
-    ...readIntroSport(shell as HTMLElement),
+    ...readIntroInitialServer(shell),
+    ...readIntroSport(shell),
+    ...readIntroTennisDoubles(shell),
   };
 }

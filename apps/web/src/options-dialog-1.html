@@ -1,4 +1,4 @@
-﻿    <dialog id="options" class="dlg-surface" data-sport="tennis">
+﻿    <dialog id="options" class="dlg-surface" data-sport="tennis" data-four-names="false">
       <div class="dlg-body dlg-body-scroll dlg-body-compact">
         <h2 class="dlg-title">Match options</h2>
         <p class="dlg-subtitle">
@@ -32,7 +32,7 @@
               />
             </label>
           </div>
-          <div class="name-row name-row-padel-only" aria-hidden="true">
+          <div class="name-row name-row-second-pair" aria-hidden="true">
             <label class="name-field">
               <span class="name-field-hint">Team A — 2</span>
               <input
@@ -81,7 +81,17 @@
             </label>
           </div>
           <p class="hint hint-premium hint-tight">
-            Padel: pick server after each change; 4 names for doubles.
+            Padel: pick server after each change; four names for doubles.
+          </p>
+        </div>
+
+        <div class="opt-block opt-tennis-doubles-only">
+          <label class="checkbox-row-premium" for="options-tennis-doubles">
+            <input type="checkbox" id="options-tennis-doubles" />
+            <span>Doubles</span>
+          </label>
+          <p class="hint hint-premium hint-tight">
+            Two names per team on the scoreboard.
           </p>
         </div>
 

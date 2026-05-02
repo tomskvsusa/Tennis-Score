@@ -18,6 +18,8 @@ export type MatchConfig = {
    * the game. Ignored when goldenPointAtDeuce is on (first deuce already decides).
    */
   starPointInTiebreak: boolean;
+  /** Tennis singles vs doubles (four name slots). Ignored for UI when `sport === "padel"` (always four names). */
+  tennisDoubles: boolean;
 };
 
 /** Same defaults as the original hard-coded engine: Bo3, set to 6, TB at 6–6, first serve A. */
@@ -29,7 +31,15 @@ export const defaultMatchConfig: MatchConfig = {
   initialServer: "a",
   goldenPointAtDeuce: false,
   starPointInTiebreak: false,
+  tennisDoubles: false,
 };
+
+export function showFourPlayerNames(config: MatchConfig): boolean {
+  return (
+    config.sport === "padel" ||
+    (config.sport === "tennis" && config.tennisDoubles)
+  );
+}
 
 export function setsToWinMatch(config: MatchConfig): number {
   return Math.ceil(config.bestOfSets / 2);

@@ -34,6 +34,7 @@ describe("MatchEngine match formats", () => {
       initialServer: "a",
       goldenPointAtDeuce: false,
       starPointInTiebreak: false,
+      tennisDoubles: false,
     };
     const e = new MatchEngine(cfg);
     for (let i = 0; i < 4; i += 1) {
@@ -56,6 +57,7 @@ describe("MatchEngine match formats", () => {
       initialServer: "a",
       goldenPointAtDeuce: false,
       starPointInTiebreak: false,
+      tennisDoubles: false,
     };
     const e = new MatchEngine(cfg);
     const winSetForA = () => {

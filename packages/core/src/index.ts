@@ -31,6 +31,7 @@ export {
   setTiebreakTargetPoints,
   setsToWinMatch,
   shouldStartDecidingMatchTiebreak,
+  showFourPlayerNames,
   type BestOfSets,
   type DecidingSetFormat,
   type GamesToWinSet,

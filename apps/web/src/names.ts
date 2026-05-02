@@ -1,8 +1,10 @@
+import { showFourPlayerNames } from "@brainstorm/core";
 import { escapeHtml } from "./escapeHtml.js";
 import { session } from "./session.js";
 
 export function labelForSide(side: "a" | "b"): string {
-  if (session.pendingConfig.sport === "padel") {
+  const cfg = session.pendingConfig;
+  if (showFourPlayerNames(cfg)) {
     const parts =
       side === "a"
         ? [session.playerNames.a1, session.playerNames.a2]
@@ -14,7 +16,8 @@ export function labelForSide(side: "a" | "b"): string {
   return raw || (side === "a" ? "Player A" : "Player B");
 }
 
-export function padelBoardNamesHtml(): string {
+/** Header block for padel or tennis doubles (four named slots). */
+export function doublesBoardNamesHtml(): string {
   const cell = (s: string, fb: string) => escapeHtml(s.trim() || fb);
   const row = (
     tag: string,

@@ -7,6 +7,7 @@ import {
   readIntroPlayerNames,
   readIntroInitialServer,
   readIntroSport,
+  readIntroTennisDoubles,
 } from "./playerForms.js";
 import { session } from "./session.js";
 import { toastChangeEnds } from "./toast.js";
@@ -28,6 +29,7 @@ export function render(): void {
           ...session.pendingConfig,
           ...readIntroInitialServer(shell),
           ...readIntroSport(shell),
+          ...readIntroTennisDoubles(shell),
         };
       }
       session.engine.reset(session.pendingConfig);

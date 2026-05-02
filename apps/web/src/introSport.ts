@@ -7,9 +7,24 @@ function syncIntroSportDataAttr(shell: HTMLElement): void {
   shell.dataset.introSport = v === "padel" ? "padel" : "tennis";
 }
 
-function revealIntroPadelDoubles(shell: HTMLElement): void {
+function syncIntroFourNamesAttr(shell: HTMLElement): void {
+  const sport = shell.dataset.introSport === "padel" ? "padel" : "tennis";
+  const four =
+    sport === "padel" ||
+    (
+      shell.querySelector(
+        "#intro-tennis-doubles",
+      ) as HTMLInputElement | null
+    )?.checked === true;
+  shell.dataset.introFourNames = four ? "true" : "false";
+  shell.querySelectorAll(".name-row-second-pair").forEach((el) => {
+    el.setAttribute("aria-hidden", four ? "false" : "true");
+  });
+}
+
+function revealIntroSecondNameRow(shell: HTMLElement): void {
   shell
-    .querySelector(".name-row-padel-only")
+    .querySelector(".name-row-second-pair")
     ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   requestAnimationFrame(() => {
     shell.querySelector<HTMLInputElement>("#intro-name-a2")?.focus();
@@ -18,18 +33,25 @@ function revealIntroPadelDoubles(shell: HTMLElement): void {
 
 export function wireIntroSportData(shell: HTMLElement): void {
   const sync = () => {
-    const before = shell.dataset.introSport;
+    const beforeFour = shell.dataset.introFourNames === "true";
+    const beforeSport = shell.dataset.introSport;
     syncIntroSportDataAttr(shell);
-    const after = shell.dataset.introSport;
-    if (after === "padel" && before !== "padel") {
-      revealIntroPadelDoubles(shell);
+    syncIntroFourNamesAttr(shell);
+    const afterFour = shell.dataset.introFourNames === "true";
+    const afterSport = shell.dataset.introSport;
+    if (afterFour && !beforeFour) {
+      revealIntroSecondNameRow(shell);
+    }
+    if (afterSport === "padel" && beforeSport !== "padel") {
+      revealIntroSecondNameRow(shell);
     }
   };
   sync();
   shell.addEventListener("change", (ev) => {
+    const t = ev.target;
     if (
-      ev.target instanceof HTMLInputElement &&
-      ev.target.name === "intro-sport"
+      t instanceof HTMLInputElement &&
+      (t.name === "intro-sport" || t.id === "intro-tennis-doubles")
     ) {
       sync();
     }

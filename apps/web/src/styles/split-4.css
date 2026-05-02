@@ -87,13 +87,34 @@
   margin-bottom: 1rem;
 }
 
-#options[data-sport="tennis"] .name-row-padel-only,
-.shell-intro[data-intro-sport="tennis"] .name-row-padel-only {
+#options[data-four-names="false"] .name-row-second-pair,
+.shell-intro[data-intro-four-names="false"] .name-row-second-pair {
   display: none;
 }
 
-.shell-intro[data-intro-sport="padel"] .name-row-padel-only {
+#options[data-four-names="true"] .name-row-second-pair,
+.shell-intro[data-intro-four-names="true"] .name-row-second-pair {
   display: grid;
+}
+
+#options[data-sport="padel"] .opt-tennis-doubles-only {
+  display: none;
+}
+
+.checkbox-row-premium {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.checkbox-row-premium input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--accent, #38bdf8);
 }
 
 .names-vs {

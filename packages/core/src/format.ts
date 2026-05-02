@@ -46,7 +46,7 @@ export function formatStatus(s: MatchSnapshot): string {
   const lines: string[] = [];
   const need = setsToWinMatch(s.config);
   lines.push(
-    `Sport: ${s.config.sport}; format: best of ${s.config.bestOfSets} (win ${need} sets), games/set ${s.config.gamesToWinSet}, deciding: ${s.config.decidingSetFormat}; golden@1st deuce: ${s.config.goldenPointAtDeuce}; star@3rd deuce: ${s.config.starPointInTiebreak}`,
+    `Sport: ${s.config.sport}${s.config.sport === "tennis" ? `; doubles: ${s.config.tennisDoubles}` : ""}; format: best of ${s.config.bestOfSets} (win ${need} sets), games/set ${s.config.gamesToWinSet}, deciding: ${s.config.decidingSetFormat}; golden@1st deuce: ${s.config.goldenPointAtDeuce}; star@3rd deuce: ${s.config.starPointInTiebreak}`,
   );
   if (s.servePicker && s.config.sport === "padel") {
     lines.push(

@@ -1,10 +1,11 @@
 import {
   formatCurrentGameOrTiebreak,
   formatStatus,
+  showFourPlayerNames,
   type MatchSnapshot,
 } from "@brainstorm/core";
 import { escapeHtml } from "./escapeHtml.js";
-import { labelForSide, padelBoardNamesHtml } from "./names.js";
+import { doublesBoardNamesHtml, labelForSide } from "./names.js";
 
 export function boardHtml(snap: MatchSnapshot): string {
   const lines = formatStatus(snap).split("\n");
@@ -49,8 +50,8 @@ export function boardHtml(snap: MatchSnapshot): string {
       </header>
 
       ${
-        snap.config.sport === "padel"
-          ? padelBoardNamesHtml()
+        showFourPlayerNames(snap.config)
+          ? doublesBoardNamesHtml()
           : `<p class="names-subhdr">${escapeHtml(labelForSide("a"))} · ${escapeHtml(labelForSide("b"))}</p>`
       }
 

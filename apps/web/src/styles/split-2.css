@@ -45,8 +45,17 @@
   margin: -0.1rem 0 0.55rem;
 }
 
-.shell-intro[data-intro-sport="padel"] .intro-doubles-hint {
+.shell-intro[data-intro-four-names="true"] .intro-doubles-hint {
   display: block;
+}
+
+.shell-intro[data-intro-sport="padel"] .intro-tennis-doubles-only {
+  display: none;
+}
+
+.intro-doubles-subhint {
+  margin-top: 0.35rem !important;
+  margin-bottom: 0 !important;
 }
 
 .intro-lead {
@@ -58,11 +67,15 @@
 }
 
 .intro-padel-note {
-  display: block;
+  display: none;
   margin-top: 0.65rem;
   font-size: 0.82rem;
   line-height: 1.45;
   color: var(--text-faint);
+}
+
+.shell-intro[data-intro-sport="padel"] .intro-padel-note {
+  display: block;
 }
 
 .serve-pending {
