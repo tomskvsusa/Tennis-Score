@@ -1,20 +1,22 @@
 ---
-description: Commit and push workflow for Tennis Score monorepo
+description: После каждого изменения в репозитории — коммит и push на текущую ветку
 alwaysApply: true
 ---
 
-# Git commit and push (this project)
+# Коммит и push после каждого изменения (этот проект)
 
-When you finish a task that changes tracked files and the user expects the work saved to GitHub:
+**Обязательно:** когда ты вносишь правки в код или конфиг этого репозитория и задача по сути завершена (или логический шаг сделан), **сразу** закрепи результат в Git и отправь на remote:
 
-1. Run `git status` from the repo root `c:\Projects\Tennis Score` (or workspace root).
-2. Stage only relevant paths with `git add` (not blanket `git add .` unless the whole change set is intentional).
-3. Commit with a short **English** message, imperative mood, optional **Conventional Commits** prefix:
-   - `feat(scope): …` / `fix(scope): …` — scope examples: `web`, `core`, `cli`, `amplify`.
-4. Push with `git push` to the current branch (usually `main`).
+1. Из корня репозитория выполни `git status`.
+2. Добавь в индекс только относящиеся к задаче файлы (`git add <пути>`), без лишнего «за компанию».
+3. Сделай коммит с коротким сообщением на **английском**, повелительное наклонение; по желанию префикс Conventional Commits: `feat(web): …`, `fix(core): …`, `chore: …`.
+4. Выполни `git push` на **текущую ветку** (обычно `main`).
 
-**Shell:** On Windows PowerShell, chain with `;` (e.g. `Set-Location "c:\Projects\Tennis Score"; git push`), not `&&`, unless you know the shell supports `&&`.
+**Windows PowerShell:** используй `;` между командами, например  
+`Set-Location "c:\Projects\Tennis Score"; git add …; git commit -m "…"; git push`
 
-**Do not** create or rewrite commits unless the user asked for git operations—except when they explicitly request commit/push or when this rule applies together with “save to remote” intent.
+**Перед коммитом** по возможности прогони релевантные проверки (`npm test`, `npm run build`), если ты их трогал или менял поведение.
 
-If the user says **no commit**, **WIP**, or **don’t push**, skip push and leave the working tree as requested.
+**Исключения — не коммитить / не пушить**, если пользователь явно написал: не коммитить, без push, только локально, WIP в рабочем дереве.
+
+**Не коммить:** секреты, токены, большие случайные артефакты; если неясно — спроси пользователя.

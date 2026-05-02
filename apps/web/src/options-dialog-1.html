@@ -1,0 +1,139 @@
+﻿    <dialog id="options" class="dlg-surface" data-sport="tennis">
+      <div class="dlg-body dlg-body-scroll dlg-body-compact">
+        <h2 class="dlg-title">Match options</h2>
+        <p class="dlg-subtitle">
+          Change format for the next match. Tap Save, then Start match or New
+          match.
+        </p>
+
+        <div class="opt-block">
+          <div class="opt-label" id="label-names">Player names</div>
+          <div class="name-row" aria-labelledby="label-names">
+            <label class="name-field">
+              <span class="name-field-hint">Team A — 1</span>
+              <input
+                type="text"
+                id="player-name-a1"
+                class="input-premium"
+                maxlength="32"
+                placeholder="Player A1"
+                autocomplete="off"
+              />
+            </label>
+            <label class="name-field">
+              <span class="name-field-hint">Team B — 1</span>
+              <input
+                type="text"
+                id="player-name-b1"
+                class="input-premium"
+                maxlength="32"
+                placeholder="Player B1"
+                autocomplete="off"
+              />
+            </label>
+          </div>
+          <div class="name-row name-row-padel-only" aria-hidden="true">
+            <label class="name-field">
+              <span class="name-field-hint">Team A — 2</span>
+              <input
+                type="text"
+                id="player-name-a2"
+                class="input-premium"
+                maxlength="32"
+                placeholder="Player A2"
+                autocomplete="off"
+              />
+            </label>
+            <label class="name-field">
+              <span class="name-field-hint">Team B — 2</span>
+              <input
+                type="text"
+                id="player-name-b2"
+                class="input-premium"
+                maxlength="32"
+                placeholder="Player B2"
+                autocomplete="off"
+              />
+            </label>
+          </div>
+        </div>
+
+        <div class="opt-block">
+          <div class="opt-label" id="label-sport">Sport</div>
+          <div
+            class="seg-row seg-row-2"
+            role="radiogroup"
+            aria-labelledby="label-sport"
+          >
+            <label class="seg-item">
+              <input
+                class="seg-input"
+                type="radio"
+                name="sport"
+                value="tennis"
+                checked
+              />
+              <span class="seg-text">Tennis</span>
+            </label>
+            <label class="seg-item">
+              <input class="seg-input" type="radio" name="sport" value="padel" />
+              <span class="seg-text">Padel</span>
+            </label>
+          </div>
+          <p class="hint hint-premium hint-tight">
+            Padel: pick server after each change; 4 names for doubles.
+          </p>
+        </div>
+
+        <div class="opt-block">
+          <div class="opt-label" id="label-bestOf">Match format</div>
+          <div
+            class="seg-row"
+            role="radiogroup"
+            aria-labelledby="label-bestOf"
+          >
+            <label class="seg-item">
+              <input
+                class="seg-input"
+                type="radio"
+                name="bestOf"
+                value="1"
+              />
+              <span class="seg-text">One set</span>
+            </label>
+            <label class="seg-item">
+              <input
+                class="seg-input"
+                type="radio"
+                name="bestOf"
+                value="3"
+                checked
+              />
+              <span class="seg-text">Best of 3</span>
+            </label>
+            <label class="seg-item">
+              <input
+                class="seg-input"
+                type="radio"
+                name="bestOf"
+                value="5"
+              />
+              <span class="seg-text">Best of 5</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="opt-block">
+          <label class="opt-label" for="games-select">Set length</label>
+          <select
+            name="games"
+            id="games-select"
+            class="select select-premium"
+          >
+            <option value="4">First to 4 games (tiebreak at 4–4)</option>
+            <option value="6" selected>
+              First to 6 games (tiebreak at 6–6)
+            </option>
+            <option value="8">First to 8 games (tiebreak at 8–8)</option>
+          </select>
+        </div>

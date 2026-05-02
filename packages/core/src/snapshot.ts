@@ -1,6 +1,5 @@
-import type { InternalState, Side } from "./engine.js";
-import { serverForUpcomingPoint } from "./engine.js";
-import type { ServePickerReason } from "./engine.js";
+import type { InternalState, ServePickerReason, Side } from "./engineTypes.js";
+import { serverForUpcomingPoint } from "./gameScoring.js";
 import { isDecidingNextSet } from "./matchConfig.js";
 import type { MatchConfig } from "./matchConfig.js";
 

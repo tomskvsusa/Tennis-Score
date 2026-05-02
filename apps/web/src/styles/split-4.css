@@ -1,0 +1,154 @@
+
+.btn.slim {
+  padding: 0.45rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+/* ----- Modal (Options + Rules) ----- */
+
+.dlg-surface {
+  max-width: var(--dlg-max-w);
+  width: 100%;
+  margin: auto;
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: 0;
+  color: var(--text);
+  background: var(--surface);
+  box-shadow:
+    var(--shadow-card),
+    var(--surface-inset),
+    0 0 0 1px var(--surface-border);
+}
+
+.dlg-surface::backdrop {
+  background: rgba(2, 6, 23, 0.72);
+  backdrop-filter: blur(8px);
+}
+
+.dlg-body {
+  padding: 1.5rem 1.5rem 1.25rem;
+  font-family: inherit;
+}
+
+.dlg-body-compact {
+  padding: 1rem 1.05rem 0.85rem;
+}
+
+.dlg-body-scroll {
+  max-height: min(92dvh, 720px);
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.dlg-body-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.dlg-surface .opt-block {
+  margin-bottom: 0.95rem;
+}
+
+.dlg-body-compact .opt-block {
+  margin-bottom: 0.55rem;
+}
+
+.dlg-body-compact .dlg-title {
+  font-size: 1.22rem;
+}
+
+.dlg-body-compact .dlg-subtitle {
+  margin-bottom: 0.65rem;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.dlg-body-compact .opt-label {
+  margin-bottom: 0.3rem;
+}
+
+.dlg-body-compact .seg-item {
+  padding: 0.42rem 0.4rem;
+  font-size: 0.76rem;
+}
+
+.dlg-body-compact .hint-premium {
+  margin-top: 0.28rem;
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+.hint-tight {
+  margin-top: 0.25rem !important;
+}
+
+.dlg-surface .dlg-subtitle {
+  margin-bottom: 1rem;
+}
+
+#options[data-sport="tennis"] .name-row-padel-only,
+.shell-intro[data-intro-sport="tennis"] .name-row-padel-only {
+  display: none;
+}
+
+.shell-intro[data-intro-sport="padel"] .name-row-padel-only {
+  display: grid;
+}
+
+.names-vs {
+  margin: 0 0.35rem;
+  font-weight: 600;
+  color: var(--text-faint);
+  font-size: 0.85em;
+}
+
+.dlg-title {
+  margin: 0 0 0.35rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.dlg-subtitle {
+  margin: 0 0 1.25rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+  font-weight: 450;
+}
+
+.dlg-subtitle-note {
+  margin-bottom: 1rem;
+}
+
+.opt-block {
+  margin-bottom: 1.25rem;
+}
+
+.opt-label {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.seg-row {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-md);
+  background: var(--seg-track);
+  border: 1px solid rgba(51, 65, 85, 0.5);
+}
+
+.seg-row-wrap {
+  flex-wrap: wrap;
+}
+
+.seg-row-2 .seg-item {
+  flex: 1;
+}

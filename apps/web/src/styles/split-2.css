@@ -1,0 +1,156 @@
+
+.link-btn.text-only {
+  display: inline;
+  width: auto;
+}
+
+.sets-inline {
+  margin: 0.35rem 0 0;
+}
+
+.shell-intro {
+  text-align: center;
+}
+
+.shell-intro .hdr-intro {
+  justify-content: space-between;
+  text-align: left;
+}
+
+.intro-form {
+  text-align: left;
+  margin-bottom: 1.15rem;
+}
+
+.intro-field-group {
+  margin-bottom: 1rem;
+}
+
+.intro-field-group:last-child {
+  margin-bottom: 0;
+}
+
+.intro-field-label {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.intro-doubles-hint {
+  display: none;
+  margin: -0.1rem 0 0.55rem;
+}
+
+.shell-intro[data-intro-sport="padel"] .intro-doubles-hint {
+  display: block;
+}
+
+.intro-lead {
+  margin: 0 0 1.5rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.intro-padel-note {
+  display: block;
+  margin-top: 0.65rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-faint);
+}
+
+.serve-pending {
+  color: #fcd34d;
+  font-weight: 600;
+}
+
+.serve-pick {
+  margin: 0 0 0.85rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+}
+
+.serve-pick-title {
+  margin: 0 0 0.65rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #fde68a;
+  text-align: center;
+}
+
+.serve-pick-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.intro-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.intro-start {
+  min-width: 13rem;
+}
+
+.board-divider {
+  height: 1px;
+  margin: 0.25rem 0 1rem;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(148, 163, 184, 0.2) 20%,
+    rgba(148, 163, 184, 0.2) 80%,
+    transparent
+  );
+  border: none;
+}
+
+.cli-details {
+  margin: 0;
+}
+
+.cli-details summary {
+  cursor: pointer;
+  color: var(--text-faint);
+  font-size: 0.78rem;
+  font-weight: 500;
+  list-style: none;
+}
+
+.cli-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.cli-details .cli {
+  margin-top: 0.5rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.sets {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.board {
+  text-align: center;
+  padding: 1.25rem 0 1rem;
+}
