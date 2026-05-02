@@ -74,7 +74,6 @@ export function introHtml(): string {
           </p>
           <div class="name-row" aria-labelledby="label-intro-names">
             <label class="name-field">
-              <span class="name-field-hint">Team A — 1</span>
               <input
                 type="text"
                 id="intro-name-a1"
@@ -82,11 +81,11 @@ export function introHtml(): string {
                 maxlength="32"
                 placeholder="Player A1"
                 autocomplete="off"
+                aria-label="Player A1"
                 value="${escapeHtml(names.a1)}"
               />
             </label>
             <label class="name-field">
-              <span class="name-field-hint">Team B — 1</span>
               <input
                 type="text"
                 id="intro-name-b1"
@@ -94,13 +93,13 @@ export function introHtml(): string {
                 maxlength="32"
                 placeholder="Player B1"
                 autocomplete="off"
+                aria-label="Player B1"
                 value="${escapeHtml(names.b1)}"
               />
             </label>
           </div>
           <div class="name-row name-row-second-pair" aria-hidden="${introFourNames === "true" ? "false" : "true"}">
             <label class="name-field">
-              <span class="name-field-hint">Team A — 2</span>
               <input
                 type="text"
                 id="intro-name-a2"
@@ -108,11 +107,11 @@ export function introHtml(): string {
                 maxlength="32"
                 placeholder="Player A2"
                 autocomplete="off"
+                aria-label="Player A2"
                 value="${escapeHtml(names.a2)}"
               />
             </label>
             <label class="name-field">
-              <span class="name-field-hint">Team B — 2</span>
               <input
                 type="text"
                 id="intro-name-b2"
@@ -120,6 +119,7 @@ export function introHtml(): string {
                 maxlength="32"
                 placeholder="Player B2"
                 autocomplete="off"
+                aria-label="Player B2"
                 value="${escapeHtml(names.b2)}"
               />
             </label>

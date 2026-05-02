@@ -103,14 +103,6 @@
   min-width: 0;
 }
 
-.name-field-hint {
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
 .input-premium {
   width: 100%;
   padding: 0.6rem 0.75rem;
