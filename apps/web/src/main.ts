@@ -55,6 +55,22 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
+function padelBoardNamesHtml(): string {
+  const cell = (s: string, fb: string) => escapeHtml(s.trim() || fb);
+  const row = (
+    tag: string,
+    n1: string,
+    n2: string,
+    f1: string,
+    f2: string,
+  ) => `<div class="names-padel-row"><span class="names-padel-tag" aria-hidden="true">${tag}</span><span class="names-padel-pair">${cell(n1, f1)}<span class="names-padel-dot"> · </span>${cell(n2, f2)}</span></div>`;
+  return `<div class="names-subhdr names-subhdr-padel" role="group" aria-label="Teams (doubles)">
+      ${row("A", playerNames.a1, playerNames.a2, "A1", "A2")}
+      <div class="names-padel-vs" aria-hidden="true">vs</div>
+      ${row("B", playerNames.b1, playerNames.b2, "B1", "B2")}
+    </div>`;
+}
+
 function labelForSide(side: "a" | "b"): string {
   if (pendingConfig.sport === "padel") {
     const parts =
@@ -250,10 +266,10 @@ function introHtml(): string {
   const sportTennisChecked =
     pendingConfig.sport !== "padel" ? "checked" : "";
   const sportPadelChecked = pendingConfig.sport === "padel" ? "checked" : "";
-  const sportClass =
-    pendingConfig.sport === "padel" ? "sport-padel" : "sport-tennis";
+  const introSportData =
+    pendingConfig.sport === "padel" ? "padel" : "tennis";
   return `
-    <main class="shell shell-intro ${sportClass}">
+    <main class="shell shell-intro" data-intro-sport="${introSportData}">
       <header class="hdr hdr-intro">
         <h1 class="title">Match</h1>
         <nav class="toolbar" aria-label="Links">
@@ -295,6 +311,9 @@ function introHtml(): string {
         </div>
         <div class="intro-field-group">
           <div class="intro-field-label" id="label-intro-names">Player names</div>
+          <p class="intro-doubles-hint hint-premium hint-tight">
+            Padel doubles: four players — two names per team (rows below).
+          </p>
           <div class="name-row" aria-labelledby="label-intro-names">
             <label class="name-field">
               <span class="name-field-hint">Team A — 1</span>
@@ -437,11 +456,11 @@ function boardHtml(snap: MatchSnapshot): string {
         </nav>
       </header>
 
-      <p class="names-subhdr">${
+      ${
         snap.config.sport === "padel"
-          ? `${escapeHtml(labelForSide("a"))}<span class="names-vs"> vs </span>${escapeHtml(labelForSide("b"))}`
-          : `${escapeHtml(labelForSide("a"))} · ${escapeHtml(labelForSide("b"))}`
-      }</p>
+          ? padelBoardNamesHtml()
+          : `<p class="names-subhdr">${escapeHtml(labelForSide("a"))} · ${escapeHtml(labelForSide("b"))}</p>`
+      }
 
       ${serveLine}
       ${servePickBlock}
@@ -510,12 +529,55 @@ function wireOptionsOpen(root: HTMLElement) {
   root.querySelector("#btn-options-board")?.addEventListener("click", open);
 }
 
+function syncIntroSportDataAttr(shell: HTMLElement) {
+  const v = (
+    shell.querySelector(
+      'input[name="intro-sport"]:checked',
+    ) as HTMLInputElement | null
+  )?.value;
+  shell.dataset.introSport = v === "padel" ? "padel" : "tennis";
+}
+
+function revealIntroPadelDoubles(shell: HTMLElement) {
+  shell
+    .querySelector(".name-row-padel-only")
+    ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  requestAnimationFrame(() => {
+    shell.querySelector<HTMLInputElement>("#intro-name-a2")?.focus();
+  });
+}
+
+function wireIntroSportData(shell: HTMLElement) {
+  const sync = () => {
+    const before = shell.dataset.introSport;
+    syncIntroSportDataAttr(shell);
+    const after = shell.dataset.introSport;
+    if (after === "padel" && before !== "padel") {
+      revealIntroPadelDoubles(shell);
+    }
+  };
+  sync();
+  shell.addEventListener("change", (ev) => {
+    if (
+      ev.target instanceof HTMLInputElement &&
+      ev.target.name === "intro-sport"
+    ) {
+      sync();
+    }
+  });
+  shell.addEventListener("click", () => {
+    queueMicrotask(sync);
+  });
+}
+
 function render() {
   wireOptionsDialogOnce();
 
   const root = document.querySelector("#app") as HTMLElement;
   if (!matchStarted) {
     root.innerHTML = introHtml();
+    const introShell = root.querySelector(".shell-intro");
+    if (introShell instanceof HTMLElement) wireIntroSportData(introShell);
     root.querySelector("#btn-start")?.addEventListener("click", () => {
       const shell = root.querySelector(".shell-intro") as HTMLElement;
       if (shell) {
